@@ -3,7 +3,7 @@
 Schemas of responses.
 """
 
-from schema import Optional, Schema
+from schema import Optional, Schema, Or
 from vmaas.utils.blockers import GH
 
 
@@ -20,7 +20,20 @@ _cves = {
             Optional('secondary_url'): str,
             'cwe_list': [str],
         }
-    }
+    },
+    Optional('modified_since'): str
+}
+
+_cves_data = {
+    'impact': str,
+    'public_date': str,
+    'synopsis': str,
+    'description': str,
+    'modified_date': str,
+    Optional('redhat_url'): str,
+    'cvss3_score': str,
+    Optional('secondary_url'): str,
+    'cwe_list': [str],
 }
 
 _errata = {
@@ -31,8 +44,8 @@ _errata = {
             'reference_list': [str],
             'issued': str,
             'description': str,
-            'solution': str,
-            'summary': str,
+            'solution': Or(str, None),
+            'summary': Or(str, None),
             'url': str,
             'synopsis': str,
             'cve_list': [str],
@@ -40,7 +53,8 @@ _errata = {
             'package_list': [str],
             'type': str,
         }
-    }
+    },
+    Optional('modified_since'): str
 }
 
 _repos = {
@@ -83,6 +97,7 @@ _updates_package = {
 }
 
 cves_schema = Schema(_cves)
+cves_data_schema = Schema(_cves_data)
 errata_schema = Schema(_errata)
 repos_schema = Schema(_repos)
 updates_top_schema = Schema(_updates_top)
