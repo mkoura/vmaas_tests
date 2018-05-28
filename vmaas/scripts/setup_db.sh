@@ -46,15 +46,20 @@ if ! ([ "$#" -eq "2" ] || ([ "$#" -eq "3" ] && ([ "$2" == "localhost" ] || [ "$2
 	exit 1
 fi
 
-printf "Step 1/2: Repo sync\nAPI Response: "
+printf "Step 1/3: Repo sync\nAPI Response: "
 curl -d "@$1" -X POST "http://$2:8081/api/v1/sync/repo"
 printf "\n"
 sleep_or_wait "Repo sync task finished: OK" 300 $3
 
-printf "Step 2/2: CVE sync\nAPI Response: "
+printf "Step 2/3: CVE sync from NIST\nAPI Response: "
 curl -X GET "http://$2:8081/api/v1/sync/cve"
 printf "\n"
-sleep_or_wait "CVE sync task finished: OK" 120 $3
+sleep_or_wait "CVE sync (NIST) task finished: OK" 120 $3
+
+printf "Step 3/3: CVE sync from RH\nAPI Response: "
+curl -X GET "http://$2:8081/api/v1/sync/cvemap"
+printf "\n"
+sleep_or_wait "CVE sync (RH) task finished: OK" 120 $3
 
 printf "WORKAROUND GH#271: "
 curl -X GET "http://$2:8081/api/v1/sync/export"
