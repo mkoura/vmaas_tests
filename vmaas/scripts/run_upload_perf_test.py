@@ -22,7 +22,7 @@ TSUNG_XML = 'updates.xml'
 
 Client = collections.namedtuple('Client', 'host cpus maxusers')
 # cpus and maxusers are optional
-Client.__new__.__defaults__ = (2, 3000)
+Client.__new__.__defaults__ = (2, 600)
 
 Server = collections.namedtuple('Server', 'host port')
 # port defaults to 80

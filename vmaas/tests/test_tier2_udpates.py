@@ -157,7 +157,6 @@ class TestUpdateI386Filter(object):
         body = tools.gen_updates_body(
             [p[0] for p in packages.PACKAGES_I386_W_FILTER], basearch='x86_64')
         updates = rest_api.get_updates(body=body).response_check()
-        # from IPython import embed; embed()
         schemas.updates_top_basearch_schema.validate(updates.raw.body)
         assert len(updates) == len(packages.PACKAGES_I386_W_FILTER)
         for name, expected in packages.PACKAGES_I386_W_FILTER:

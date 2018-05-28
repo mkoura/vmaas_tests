@@ -14,4 +14,8 @@ logging.basicConfig()
 @pytest.fixture()
 def rest_api():
     hostname = conf.get('hostname', 'localhost')
-    return VMaaSClient(hostname)
+    try:
+        hostname, port = hostname.split(':')
+    except ValueError:
+        port = 8080
+    return VMaaSClient(hostname, port=port)

@@ -56,4 +56,9 @@ curl -X GET "http://$2:8081/api/v1/sync/cve"
 printf "\n"
 sleep_or_wait "CVE sync task finished: OK" 120 $3
 
+printf "WORKAROUND GH#271: "
+curl -X GET "http://$2:8081/api/v1/sync/export"
+printf "\n"
+sleep_or_wait "WORKAROUND export task finished: OK" 120 $3
+
 printf "Done.\n"
