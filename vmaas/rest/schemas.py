@@ -3,7 +3,7 @@
 Schemas of responses.
 """
 
-from schema import Optional, Schema, Or
+from schema import Optional, Or, Schema
 from vmaas.utils.blockers import GH
 
 

@@ -144,7 +144,6 @@ def validate_package_updates(package, expected_updates, exact_match=False):
 
 def cve_match(expected, cve):
     """Checks if expected cve record matches cve record."""
-    # from IPython import embed; embed()
     for key, value in expected.items():
         # exact match for all the values
         if value == cve[key]:
