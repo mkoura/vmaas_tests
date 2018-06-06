@@ -4,6 +4,7 @@ import pytest
 
 from vmaas.misc import packages
 from vmaas.rest import schemas, tools
+from vmaas.utils.blockers import GH
 
 
 class TestUpdatesAll(object):
@@ -64,6 +65,14 @@ class TestUpdatesInRepos(object):
         assert len(updates) == 1
         package, = updates
         tools.validate_package_updates(package, expected_updates)
+
+    @pytest.mark.skipif(GH(299).blocks, reason='Blocked by GH 299')
+    def test_post_nonexistent_repo(self, rest_api):
+        """Tests updates in repos using POST with single package."""
+        name = packages.PACKAGES_W_REPOS[0][0]
+        request_body = tools.gen_updates_body([name], repositories=['nonexistent-1'])
+        updates = rest_api.get_updates(body=request_body).response_check()
+        assert not updates
 
 
 class TestUpdatesFilterRelease(object):

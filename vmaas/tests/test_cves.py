@@ -3,6 +3,8 @@
 import pytest
 
 from vmaas.rest import schemas, tools
+from vmaas.utils.blockers import GH
+
 
 EXP_2016_0634 = [
     {
@@ -106,6 +108,7 @@ class TestCVEsQuery(object):
         assert cve.name == cve_name
 
 
+@pytest.mark.skipif(GH(299).blocks, reason='Blocked by GH 299')
 class TestCVEsModifiedSince(object):
     def test_post_multi(self, rest_api):
         """Tests multiple CVEs using POST."""
