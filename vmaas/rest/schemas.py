@@ -21,7 +21,10 @@ _cves = {
             'cwe_list': [str],
         }
     },
-    Optional('modified_since'): str
+    Optional('modified_since'): str,
+    'page': int,
+    'page_size': int,
+    'pages': int,
 }
 
 _cves_data = {
