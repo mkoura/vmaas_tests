@@ -7,6 +7,7 @@ from vmaas.rest import schemas, tools
 from vmaas.utils.blockers import GH
 
 
+@pytest.mark.smoke
 class TestUpdatesBasic(object):
     def test_post_multi(self, rest_api):
         """Tests correct updates using POST with multiple packages."""

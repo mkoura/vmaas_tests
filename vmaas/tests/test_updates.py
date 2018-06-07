@@ -7,6 +7,7 @@ from vmaas.rest import schemas, tools
 from vmaas.utils.blockers import GH
 
 
+@pytest.mark.smoke
 class TestUpdatesAll(object):
     def test_post_multi(self, rest_api):
         """Tests updates using POST with multiple packages."""
@@ -42,6 +43,7 @@ class TestUpdatesAll(object):
         tools.validate_package_updates(package, expected_updates)
 
 
+@pytest.mark.smoke
 class TestUpdatesInRepos(object):
     def test_post_multi(self, rest_api):
         """Tests updates in repos using POST with multiple packages."""

@@ -90,7 +90,7 @@ def _updates_match(expected_update, available_update, exact_match):
     return True
 
 
-def check_expected_updates(expected_updates, available_updates, exact_match):
+def check_expected_updates_content(expected_updates, available_updates, exact_match):
     """Checks if all expected update records are present in available updates."""
     not_found = []
     for expected_update in expected_updates:
@@ -100,6 +100,16 @@ def check_expected_updates(expected_updates, available_updates, exact_match):
         else:
             not_found.append(expected_update)
     assert not not_found, 'Expected update not found: {!r}'.format(not_found)
+
+
+def checks_expected_updates_number(expected_updates, available_updates):
+    """Checks number of expected update records."""
+    known_repos = [rec['repository'] for rec in expected_updates]
+    known_releases = [rec['releasever'] for rec in expected_updates]
+
+    new_available = [av for av in available_updates
+                     if av['repository'] in known_repos and av['releasever'] in known_releases]
+    assert len(expected_updates) == len(new_available)
 
 
 def validate_package_updates(package, expected_updates, exact_match=False):
@@ -135,10 +145,10 @@ def validate_package_updates(package, expected_updates, exact_match=False):
 
     # check that expected updates are present in the response
     if exact_match:
-        assert len(package.available_updates) == len(expected_updates)
+        checks_expected_updates_number(expected_updates, package.available_updates)
     else:
         assert len(package.available_updates) >= len(expected_updates)
-    check_expected_updates(
+    check_expected_updates_content(
         expected_updates, package.available_updates, exact_match)
 
 

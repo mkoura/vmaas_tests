@@ -191,6 +191,7 @@ EXPECTED_RELEASE_FILTER_2 = [
     }
 ]
 
+# used for smoke tests
 PACKAGES_BASIC = [
     # package, expected updates
     ('bash-0:4.2.45-5.el7_0.2.x86_64', EXPECTED_BASH),

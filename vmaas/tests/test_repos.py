@@ -6,8 +6,13 @@ from vmaas.rest import schemas, tools
 from vmaas.utils.blockers import GH
 
 REPOS = [
-    ('rhel-7-server-rpms', 1),
     ('vmaas-test-1', 1),
+    ('vmaas-test-2', 1),
+]
+
+REPOS_SMOKE = [
+    ('rhel-7-server-rpms', 1),
+    ('rhel-7-workstation-rpms', 1),
 ]
 
 REPOS_NONEXISTENT = [
@@ -17,17 +22,16 @@ REPOS_NONEXISTENT = [
 
 
 class TestReposQuery(object):
-    def test_post_multi(self, rest_api):
+    def post_multi(self, rest_api, repos):
         """Tests multiple repos using POST."""
-        request_body = tools.gen_repos_body([p[0] for p in REPOS])
-        repos = rest_api.get_repos(body=request_body).response_check()
-        schemas.repos_schema.validate(repos.raw.body)
-        assert len(repos) == len(REPOS)
-        for repo_name, min_expected in REPOS:
-            assert len(repos[repo_name]) >= min_expected
+        request_body = tools.gen_repos_body([p[0] for p in repos])
+        repos_response = rest_api.get_repos(body=request_body).response_check()
+        schemas.repos_schema.validate(repos_response.raw.body)
+        assert len(repos_response) == len(repos)
+        for repo_name, min_expected in repos:
+            assert len(repos_response[repo_name]) >= min_expected
 
-    @pytest.mark.parametrize('repo', REPOS, ids=[p[0] for p in REPOS])
-    def test_post_single(self, rest_api, repo):
+    def post_single(self, rest_api, repo):
         """Tests single repo using POST."""
         repo_name, min_expected = repo
         request_body = tools.gen_repos_body([repo_name])
@@ -37,8 +41,7 @@ class TestReposQuery(object):
         repo, = repos
         assert len(repo) >= min_expected
 
-    @pytest.mark.parametrize('repo', REPOS, ids=[p[0] for p in REPOS])
-    def test_get(self, rest_api, repo):
+    def get(self, rest_api, repo):
         """Tests single repo using GET."""
         repo_name, min_expected = repo
         repos = rest_api.get_repo(repo_name).response_check()
@@ -47,7 +50,39 @@ class TestReposQuery(object):
         repo, = repos
         assert len(repo) >= min_expected
 
+    def test_post_multi(self, rest_api):
+        """Tests multiple test repos using POST."""
+        self.post_multi(rest_api, REPOS)
 
+    @pytest.mark.smoke
+    def test_post_multi_smoke(self, rest_api):
+        """Tests multiple real repos using POST."""
+        self.post_multi(rest_api, REPOS_SMOKE)
+
+    @pytest.mark.parametrize('repo', REPOS, ids=[p[0] for p in REPOS])
+    def test_post_single(self, rest_api, repo):
+        """Tests single test repo using POST."""
+        self.post_single(rest_api, repo)
+
+    @pytest.mark.smoke
+    @pytest.mark.parametrize('repo', REPOS_SMOKE, ids=[p[0] for p in REPOS_SMOKE])
+    def test_post_single_smoke(self, rest_api, repo):
+        """Tests single real repo using POST."""
+        self.post_single(rest_api, repo)
+
+    @pytest.mark.parametrize('repo', REPOS, ids=[p[0] for p in REPOS])
+    def test_get(self, rest_api, repo):
+        """Tests single test repo using GET."""
+        self.get(rest_api, repo)
+
+    @pytest.mark.smoke
+    @pytest.mark.parametrize('repo', REPOS_SMOKE, ids=[p[0] for p in REPOS_SMOKE])
+    def test_get_smoke(self, rest_api, repo):
+        """Tests single real repo using GET."""
+        self.get(rest_api, repo)
+
+
+@pytest.mark.smoke
 class TestReposNonexistent(object):
     @pytest.mark.skipif(GH(299).blocks, reason='Blocked by GH 299')
     def test_post_multi(self, rest_api):
