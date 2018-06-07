@@ -23,7 +23,8 @@ EXP_2014_7970 = [
         ],
         "impact": "Low",
         "redhat_url": "https://access.redhat.com/security/cve/cve-2014-7970",
-        "secondary_url": "http://lists.opensuse.org/opensuse-security-announce/2015-04/msg00015.html",
+        "secondary_url":
+            "http://lists.opensuse.org/opensuse-security-announce/2015-04/msg00015.html",
         "synopsis": "CVE-2014-7970"
     }
 ]
@@ -76,6 +77,7 @@ CVES = [
 ]
 
 
+@pytest.mark.smoke
 class TestCVEsQuery(object):
     def test_post_multi(self, rest_api):
         """Tests multiple CVEs using POST."""
@@ -108,6 +110,7 @@ class TestCVEsQuery(object):
         assert cve.name == cve_name
 
 
+@pytest.mark.smoke
 @pytest.mark.skipif(GH(299).blocks, reason='Blocked by GH 299')
 class TestCVEsModifiedSince(object):
     def test_post_multi(self, rest_api):
@@ -135,10 +138,10 @@ class TestCVEsModifiedSince(object):
             cve, = cves
             assert cve.name == expected_name
         else:
-            assert len(cves) == 0
             assert not cves
 
 
+@pytest.mark.smoke
 class TestCVEsCorrect(object):
     def test_post_multi(self, rest_api):
         """Tests multiple CVEs using POST."""
