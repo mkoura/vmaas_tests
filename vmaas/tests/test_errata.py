@@ -3,6 +3,7 @@
 import pytest
 
 from vmaas.rest import schemas, tools
+from vmaas.utils.blockers import GH
 
 ERRATA = [
     ('vmaas_test_1', None),
@@ -68,6 +69,7 @@ class TestErrataQuery(object):
         assert erratum.name == erratum_name
 
 
+@pytest.mark.skipif(GH(299).blocks, reason='Blocked by GH 299')
 class TestErrataModifiedSince(object):
     def post_multi(self, rest_api, errata):
         """Tests multiple errata using POST."""
