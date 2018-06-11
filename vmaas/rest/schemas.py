@@ -22,10 +22,9 @@ _cves = {
         }
     },
     Optional('modified_since'): str,
-    # pagination - FIXME: remove 'Optional' once deployed on CI
-    Optional('page'): int,
-    Optional('page_size'): int,
-    Optional('pages'): int,
+    'page': int,
+    'page_size': int,
+    'pages': int,
 }
 
 _cves_data = {
