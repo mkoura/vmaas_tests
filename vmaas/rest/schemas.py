@@ -57,7 +57,10 @@ _errata = {
             'type': str,
         }
     },
-    Optional('modified_since'): str
+    Optional('modified_since'): str,
+    'page': int,
+    'page_size': int,
+    'pages': int
 }
 
 _repos = {
