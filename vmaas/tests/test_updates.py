@@ -44,6 +44,7 @@ class TestUpdatesAll(object):
 
 
 @pytest.mark.smoke
+@pytest.mark.skipif(GH(301).blocks, reason='Blocked by GH 301')
 class TestUpdatesInRepos(object):
     def test_post_multi(self, rest_api):
         """Tests updates in repos using POST with multiple packages."""
@@ -77,6 +78,7 @@ class TestUpdatesInRepos(object):
         assert not updates
 
 
+@pytest.mark.skipif(GH(301).blocks, reason='Blocked by GH 301')
 class TestUpdatesFilterRelease(object):
     def test_post_multi(self, rest_api):
         """Tests updates with filtered release version using POST with multiple packages."""
@@ -105,6 +107,7 @@ class TestUpdatesFilterRelease(object):
         tools.validate_package_updates(package, expected_updates)
 
 
+@pytest.mark.skipif(GH(301).blocks, reason='Blocked by GH 301')
 class TestUpdatesFilterBasearch(object):
     def test_post_multi(self, rest_api):
         """Tests updates with filtered basearch using POST with multiple packages."""

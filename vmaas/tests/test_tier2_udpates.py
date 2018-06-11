@@ -161,6 +161,7 @@ class TestUpdateFromNoarch(object):
         tools.validate_package_updates(package, expected, exact_match=True)
 
 
+@pytest.mark.skipif(GH(301).blocks, reason='Blocked by GH 301')
 class TestUpdateI386Filter(object):
     @pytest.mark.skipif(GH(273).blocks, reason='Blocked by GH 273')
     def test_post_multi(self, rest_api):
