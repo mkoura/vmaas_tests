@@ -375,13 +375,15 @@ PACKAGES = [
     ('postgresql-0:9.2.18-1.el7.x86_64', EXPECTED_POSTGRES),
     ('postgresql-devel-9.2.18-1.el7.x86_64', EXPECTED_POSTGRES_DEVEL),
     ('telepathy-logger-0.8.0-5.el7.x86_64', None),
+    ('vim-common-2:7.4.160-1.el7.x86_64.rpm', EXPECTED_VIM),
+    ('non-exist-0:1.1-1.el7.x86_64', None)
 ]
 
 PACKAGES_W_REPOS = [
     # package, expected updates
     ('bash-0:4.2.46-20.el7_2.x86_64', EXPECTED_BASH_W_REPO),
     ('postgresql-0:9.2.18-1.el7.x86_64', EXPECTED_POSTGRES_W_REPO),
-    ('postgresql-devel-9.2.18-1.el7.x86_64', EXPECTED_POSTGRES_DEVEL_W_REPO),
+    ('postgresql-devel-9.2.18-1.el7.x86_64', EXPECTED_POSTGRES_DEVEL_W_REPO)
 ]
 
 REPOS = [
