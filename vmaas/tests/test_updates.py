@@ -56,6 +56,8 @@ class TestUpdatesInRepos(object):
         for package_name, expected_updates in packages.PACKAGES_W_REPOS:
             package = updates[package_name]
             tools.validate_package_updates(package, expected_updates)
+            for update in package.available_updates:
+                assert update['repository'] in packages.REPOS
 
     @pytest.mark.parametrize(
         'package_record', packages.PACKAGES_W_REPOS, ids=[p[0] for p in packages.PACKAGES_W_REPOS])
@@ -68,6 +70,8 @@ class TestUpdatesInRepos(object):
         assert len(updates) == 1
         package, = updates
         tools.validate_package_updates(package, expected_updates)
+        for update in package.available_updates:
+            assert update['repository'] in packages.REPOS
 
     @pytest.mark.skipif(GH(299).blocks, reason='Blocked by GH 299')
     def test_post_nonexistent_repo(self, rest_api):
@@ -83,13 +87,15 @@ class TestUpdatesFilterRelease(object):
     def test_post_multi(self, rest_api):
         """Tests updates with filtered release version using POST with multiple packages."""
         request_body = tools.gen_updates_body(
-            [p[0] for p in packages.PACKAGES_RELEASE_FILTER], releasever='6')
+            [p[0] for p in packages.PACKAGES_RELEASE_FILTER], releasever='7')
         updates = rest_api.get_updates(body=request_body).response_check()
         schemas.updates_top_releasever_schema.validate(updates.raw.body)
         assert len(updates) == len(packages.PACKAGES_RELEASE_FILTER)
         for package_name, expected_updates in packages.PACKAGES_RELEASE_FILTER:
             package = updates[package_name]
             tools.validate_package_updates(package, expected_updates)
+            for update in package.available_updates:
+                assert update['releasever'] == request_body['releasever']
 
     @pytest.mark.parametrize(
         'package_record',
@@ -99,12 +105,14 @@ class TestUpdatesFilterRelease(object):
     def test_post_single(self, rest_api, package_record):
         """Tests updates with filtered release version using POST with single package."""
         name, expected_updates = package_record
-        request_body = tools.gen_updates_body([name], releasever='6')
+        request_body = tools.gen_updates_body([name], releasever='7')
         updates = rest_api.get_updates(body=request_body).response_check()
         schemas.updates_top_releasever_schema.validate(updates.raw.body)
         assert len(updates) == 1
         package, = updates
         tools.validate_package_updates(package, expected_updates)
+        for update in package.available_updates:
+            assert update['releasever'] == request_body['releasever']
 
 
 @pytest.mark.skipif(GH(301).blocks, reason='Blocked by GH 301')
@@ -119,6 +127,8 @@ class TestUpdatesFilterBasearch(object):
         for package_name, expected_updates in packages.PACKAGES_BASEARCH_FILTER:
             package = updates[package_name]
             tools.validate_package_updates(package, expected_updates)
+            for update in package.available_updates:
+                assert update['basearch'] == request_body['basearch']
 
     @pytest.mark.parametrize(
         'package_record',
@@ -134,3 +144,5 @@ class TestUpdatesFilterBasearch(object):
         assert len(updates) == 1
         package, = updates
         tools.validate_package_updates(package, expected_updates)
+        for update in package.available_updates:
+            assert update['basearch'] == request_body['basearch']
