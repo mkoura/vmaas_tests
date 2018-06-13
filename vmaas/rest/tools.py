@@ -6,6 +6,8 @@ REST API helper functions
 import datetime
 
 from vmaas.rest import schemas
+from vmaas.rest.client import VMaaSClient
+from vmaas.utils.conf import conf
 
 
 def gen_cves_body(cves, modified_since=None):
@@ -183,3 +185,12 @@ def validate_cves(cve, expected):
 
     # check that expected data are present in the response
     cve_match(expected[0], cve)
+
+
+def rest_api():
+    hostname = conf.get('hostname', 'localhost')
+    try:
+        hostname, port = hostname.split(':')
+    except ValueError:
+        port = 8080 if hostname in ('localhost', '127.0.0.1') else 80
+    return VMaaSClient(hostname, port=port)

@@ -152,23 +152,23 @@ class TestUpdatesFilterBasearch(object):
 
 
 class TestUpdatesDiff(object):
-    def test_post_diff(self, make_conn):
+    def test_post_diff(self):
         """Tests that application returns always the same response using POST."""
         request_body = tools.gen_updates_body(
             ['bash-0:4.2.46-20.el7_2.x86_64'])
-        rest_api = make_conn()
+        rest_api = tools.rest_api()
         init = rest_api.get_updates(body=request_body).response_check()
         for i in range(100):
-            rest_api = make_conn()
+            rest_api = tools.rest_api()
             response = rest_api.get_updates(body=request_body).response_check()
             assert init.raw.body == response.raw.body
 
-    def test_get_diff(self, make_conn):
+    def test_get_diff(self):
         """Tests that application returns always the same response using GET."""
         pkg = 'bash-0:4.2.46-20.el7_2.x86_64'
-        rest_api = make_conn()
+        rest_api = tools.rest_api()
         init = rest_api.get_update(pkg).response_check()
         for i in range(100):
-            rest_api = make_conn()
+            rest_api = tools.rest_api()
             response = rest_api.get_update(pkg).response_check()
             assert init.raw.body == response.raw.body
