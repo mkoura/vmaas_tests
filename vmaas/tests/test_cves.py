@@ -116,7 +116,7 @@ class TestCVEsModifiedSince(object):
     def test_post_multi(self, rest_api):
         """Tests multiple CVEs using POST."""
         request_body = tools.gen_cves_body(
-            [c[0] for c in CVES], modified_since='2018-01-01')
+            [c[0] for c in CVES], modified_since='2018-01-01T00:00:00+01:00')
         cves = rest_api.get_cves(body=request_body).response_check()
         schemas.cves_schema.validate(cves.raw.body)
         assert len(cves) == len([c[1] for c in CVES if c[1]])
@@ -129,7 +129,7 @@ class TestCVEsModifiedSince(object):
         """Tests single CVE using POST."""
         cve_name, expected_name, _ = cve_in
         request_body = tools.gen_cves_body(
-            [cve_name], modified_since='2018-01-01')
+            [cve_name], modified_since='2018-01-01T00:00:00+01:00')
         cves = rest_api.get_cves(body=request_body).response_check()
         # don't validate schema on empty response
         if expected_name:

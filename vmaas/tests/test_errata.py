@@ -85,12 +85,11 @@ class TestErrataQuery(object):
         assert erratum.name == erratum_name
 
 
-@pytest.mark.skipif(GH(299).blocks, reason='Blocked by GH 299')
 class TestErrataModifiedSince(object):
     def post_multi(self, rest_api, errata):
         """Tests multiple errata using POST."""
         request_body = tools.gen_errata_body(
-            [e[0] for e in errata], modified_since='2018-04-06')
+            [e[0] for e in errata], modified_since='2018-04-06T00:00:00+01:00')
         errata_response = rest_api.get_errata(
             body=request_body).response_check()
         schemas.errata_schema.validate(errata_response.raw.body)
@@ -103,7 +102,7 @@ class TestErrataModifiedSince(object):
         """Tests single erratum using POST."""
         name, expected_name = erratum
         request_body = tools.gen_errata_body(
-            [name], modified_since='2018-04-06')
+            [name], modified_since='2018-04-06T00:00:00+01:00')
         errata = rest_api.get_errata(body=request_body).response_check()
         # don't validate schema on empty response
         if expected_name:
