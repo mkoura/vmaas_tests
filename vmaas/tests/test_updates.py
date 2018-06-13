@@ -11,7 +11,8 @@ from vmaas.utils.blockers import GH
 class TestUpdatesAll(object):
     def test_post_multi(self, rest_api):
         """Tests updates using POST with multiple packages."""
-        request_body = tools.gen_updates_body([p[0] for p in packages.PACKAGES])
+        request_body = tools.gen_updates_body(
+            [p[0] for p in packages.PACKAGES])
         updates = rest_api.get_updates(body=request_body).response_check()
         schemas.updates_top_schema.validate(updates.raw.body)
         assert len(updates) == len(packages.PACKAGES)
@@ -56,24 +57,30 @@ class TestUpdatesInRepos(object):
         for package_name, expected_updates in packages.PACKAGES_W_REPOS:
             package = updates[package_name]
             tools.validate_package_updates(package, expected_updates)
+            for update in package.available_updates:
+                assert update['repository'] in packages.REPOS
 
     @pytest.mark.parametrize(
         'package_record', packages.PACKAGES_W_REPOS, ids=[p[0] for p in packages.PACKAGES_W_REPOS])
     def test_post_single(self, rest_api, package_record):
         """Tests updates in repos using POST with single package."""
         name, expected_updates = package_record
-        request_body = tools.gen_updates_body([name], repositories=packages.REPOS)
+        request_body = tools.gen_updates_body(
+            [name], repositories=packages.REPOS)
         updates = rest_api.get_updates(body=request_body).response_check()
         schemas.updates_top_repolist_schema.validate(updates.raw.body)
         assert len(updates) == 1
         package, = updates
         tools.validate_package_updates(package, expected_updates)
+        for update in package.available_updates:
+            assert update['repository'] in packages.REPOS
 
     @pytest.mark.skipif(GH(299).blocks, reason='Blocked by GH 299')
     def test_post_nonexistent_repo(self, rest_api):
         """Tests updates in repos using POST with single package."""
         name = packages.PACKAGES_W_REPOS[0][0]
-        request_body = tools.gen_updates_body([name], repositories=['nonexistent-1'])
+        request_body = tools.gen_updates_body(
+            [name], repositories=['nonexistent-1'])
         updates = rest_api.get_updates(body=request_body).response_check()
         assert not updates
 
@@ -90,6 +97,8 @@ class TestUpdatesFilterRelease(object):
         for package_name, expected_updates in packages.PACKAGES_RELEASE_FILTER:
             package = updates[package_name]
             tools.validate_package_updates(package, expected_updates)
+            for update in package.available_updates:
+                assert update['releasever'] == request_body['releasever']
 
     @pytest.mark.parametrize(
         'package_record',
@@ -105,6 +114,8 @@ class TestUpdatesFilterRelease(object):
         assert len(updates) == 1
         package, = updates
         tools.validate_package_updates(package, expected_updates)
+        for update in package.available_updates:
+            assert update['releasever'] == request_body['releasever']
 
 
 @pytest.mark.skipif(GH(301).blocks, reason='Blocked by GH 301')
@@ -119,6 +130,8 @@ class TestUpdatesFilterBasearch(object):
         for package_name, expected_updates in packages.PACKAGES_BASEARCH_FILTER:
             package = updates[package_name]
             tools.validate_package_updates(package, expected_updates)
+            for update in package.available_updates:
+                assert update['basearch'] == request_body['basearch']
 
     @pytest.mark.parametrize(
         'package_record',
@@ -134,3 +147,28 @@ class TestUpdatesFilterBasearch(object):
         assert len(updates) == 1
         package, = updates
         tools.validate_package_updates(package, expected_updates)
+        for update in package.available_updates:
+            assert update['basearch'] == request_body['basearch']
+
+
+class TestUpdatesDiff(object):
+    def test_post_diff(self):
+        """Tests that application returns always the same response using POST."""
+        request_body = tools.gen_updates_body(
+            [packages.CACHED_PKG])
+        rest_api = tools.rest_api()
+        init = rest_api.get_updates(body=request_body).response_check()
+        for i in range(100):
+            rest_api = tools.rest_api()
+            response = rest_api.get_updates(body=request_body).response_check()
+            assert init.raw.body == response.raw.body
+
+    def test_get_diff(self):
+        """Tests that application returns always the same response using GET."""
+        pkg = packages.CACHED_PKG
+        rest_api = tools.rest_api()
+        init = rest_api.get_update(pkg).response_check()
+        for i in range(100):
+            rest_api = tools.rest_api()
+            response = rest_api.get_update(pkg).response_check()
+            assert init.raw.body == response.raw.body
