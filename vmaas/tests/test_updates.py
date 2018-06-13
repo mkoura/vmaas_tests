@@ -155,7 +155,7 @@ class TestUpdatesDiff(object):
     def test_post_diff(self):
         """Tests that application returns always the same response using POST."""
         request_body = tools.gen_updates_body(
-            ['bash-0:4.2.46-20.el7_2.x86_64'])
+            [packages.CACHED_PKG])
         rest_api = tools.rest_api()
         init = rest_api.get_updates(body=request_body).response_check()
         for i in range(100):
@@ -165,7 +165,7 @@ class TestUpdatesDiff(object):
 
     def test_get_diff(self):
         """Tests that application returns always the same response using GET."""
-        pkg = 'bash-0:4.2.46-20.el7_2.x86_64'
+        pkg = packages.CACHED_PKG
         rest_api = tools.rest_api()
         init = rest_api.get_update(pkg).response_check()
         for i in range(100):

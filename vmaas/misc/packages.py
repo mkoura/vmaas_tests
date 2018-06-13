@@ -390,3 +390,5 @@ REPOS = [
     'vmaas-test-1',
     'rhel-7-server-rpms',
 ]
+
+CACHED_PKG = 'bash-0:4.2.46-20.el7_2.x86_64'
