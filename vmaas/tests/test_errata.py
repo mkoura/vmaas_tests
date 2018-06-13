@@ -13,7 +13,17 @@ ERRATA = [
 ERRATA_SMOKE = [
     ('RHBA-2016:2858', None),
     ('RHSA-2017:1931', None),
-    ('RHSA-2018:1099', 'RHSA-2018:1099')
+    ('RHSA-2018:1099', 'RHSA-2018:1099'),
+    ('RHEA-2010:0932', None),   # GH#310
+    ('RHBA-2016:1031', None)    # GH#310
+]
+
+ERRATA_REGEX = [
+    ('vmaas', 9),
+    ('vmaas*', 9),
+    ('RHSA-2018:\\d+', 74),
+    ('RHSA-2018:051[1-5]', 2),
+    ('RH.*', 5000)      # GH#310
 ]
 
 
@@ -21,7 +31,8 @@ class TestErrataQuery(object):
     def post_multi(self, rest_api, errata):
         """Tests multiple errata using POST."""
         request_body = tools.gen_errata_body([e[0] for e in errata])
-        errata_response = rest_api.get_errata(body=request_body).response_check()
+        errata_response = rest_api.get_errata(
+            body=request_body).response_check()
         schemas.errata_schema.validate(errata_response.raw.body)
         assert len(errata_response) == len(errata)
         for erratum_name, __ in errata:
@@ -42,6 +53,7 @@ class TestErrataQuery(object):
         self.post_multi(rest_api, ERRATA)
 
     @pytest.mark.smoke
+    @pytest.mark.skipif(GH(310).blocks, reason='Blocked by GH 310')
     def test_post_multi_smoke(self, rest_api):
         """Tests multiple real errata using POST."""
         self.post_multi(rest_api, ERRATA_SMOKE)
@@ -55,6 +67,8 @@ class TestErrataQuery(object):
     @pytest.mark.parametrize('erratum', ERRATA_SMOKE, ids=[e[0] for e in ERRATA_SMOKE])
     def test_post_single_smoke(self, rest_api, erratum):
         """Tests single real erratum using POST."""
+        if erratum[0] in ['RHEA-2010:0932', 'RHBA-2016:1031'] and GH(310).blocks:
+            pytest.skip("Blocked by GH#310")
         self.post_single(rest_api, erratum)
 
     @pytest.mark.smoke
@@ -62,6 +76,8 @@ class TestErrataQuery(object):
     def test_get(self, rest_api, erratum):
         """Tests single real erratum using GET."""
         erratum_name, _ = erratum
+        if erratum_name in ['RHEA-2010:0932', 'RHBA-2016:1031'] and GH(310).blocks:
+            pytest.skip("Blocked by GH#310")
         errata = rest_api.get_erratum(erratum_name).response_check()
         schemas.errata_schema.validate(errata.raw.body)
         assert len(errata) == 1
@@ -75,7 +91,8 @@ class TestErrataModifiedSince(object):
         """Tests multiple errata using POST."""
         request_body = tools.gen_errata_body(
             [e[0] for e in errata], modified_since='2018-04-06')
-        errata_response = rest_api.get_errata(body=request_body).response_check()
+        errata_response = rest_api.get_errata(
+            body=request_body).response_check()
         schemas.errata_schema.validate(errata_response.raw.body)
         assert len(errata_response) == len([e[1] for e in errata if e[1]])
         for __, expected_name in errata:
@@ -116,3 +133,37 @@ class TestErrataModifiedSince(object):
     def test_post_single_smoke(self, rest_api, erratum):
         """Tests single real erratum using POST."""
         self.post_single(rest_api, erratum)
+
+
+class TestErrataRegex(object):
+    @pytest.mark.skipif(GH(310).blocks, reason='Blocked by GH 310')
+    def test_post_multi(self, rest_api):
+        """Tests multiple errata using POST."""
+        request_body = tools.gen_errata_body([e[0] for e in ERRATA_REGEX])
+        errata_response = rest_api.get_errata(
+            body=request_body).response_check()
+        schemas.errata_schema.validate(errata_response.raw.body)
+        assert len(errata_response) == 5000  # default max responses per page
+
+    @pytest.mark.parametrize(
+        'erratum', ERRATA_REGEX, ids=[e[0] for e in ERRATA_REGEX])
+    def test_post_single(self, rest_api, erratum):
+        """Tests single erratum using POST."""
+        erratum_name, errata_num = erratum
+        if erratum_name in ['RH.*'] and GH(310).blocks:
+            pytest.skip("Blocked by GH#310")
+        request_body = tools.gen_errata_body([erratum_name])
+        errata = rest_api.get_errata(body=request_body).response_check()
+        schemas.errata_schema.validate(errata.raw.body)
+        assert len(errata) == errata_num
+
+    @pytest.mark.parametrize(
+        'erratum', ERRATA_REGEX, ids=[e[0] for e in ERRATA_REGEX])
+    def test_get(self, rest_api, erratum):
+        """Tests single real erratum using GET."""
+        erratum_name, errata_num = erratum
+        if erratum_name in ['RH.*'] and GH(310).blocks:
+            pytest.skip("Blocked by GH#310")
+        errata = rest_api.get_erratum(erratum_name).response_check()
+        schemas.errata_schema.validate(errata.raw.body)
+        assert len(errata) == errata_num
