@@ -243,7 +243,7 @@ def get_args(args=None):
                         help='File with list of rpm files')
     parser.add_argument('-s', '--server', required=True, action='append',
                         help='Server hostname:port')
-    parser.add_argument('-c', '--client', default='localhost', action='append',
+    parser.add_argument('-c', '--client', default=['localhost'], action='append',
                         help='Client host:cpus:maxusers'
                              ' (default: %(default)s)')
     parser.add_argument('-d', '--duration', type=int, default=600, metavar='SEC',
@@ -267,10 +267,16 @@ def get_args(args=None):
 def main(args=None):
     """Main function for cli."""
     args = get_args(args)
+
+    # remove default value if non-default was specified
+    clients = args.client
+    if len(clients) > 1:
+        clients = clients[1:]
+
     gen_tsung_xml(
         args.packages_file,
         get_counts_list(args.packages_num, args.requests_num),
-        get_clients(args.client),
+        get_clients(clients),
         get_servers(args.server),
         args.duration,
         args.users_num,
