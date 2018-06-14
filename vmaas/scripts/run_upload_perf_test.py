@@ -22,7 +22,7 @@ TSUNG_XML = 'updates.xml'
 
 Client = collections.namedtuple('Client', 'host cpus maxusers')
 # cpus and maxusers are optional
-Client.__new__.__defaults__ = (2, 600)
+Client.__new__.__defaults__ = (1, 600)
 
 Server = collections.namedtuple('Server', 'host port')
 # port defaults to 80
@@ -76,7 +76,7 @@ def _add_clients(parent_element, clients):
     client_element = ElementTree.SubElement(parent_element, 'clients')
     for host, cpu, maxusers in clients:
         attrs = {'host': host, 'cpu': str(cpu), 'maxusers': str(maxusers)}
-        if host == 'localhost':
+        if host == 'localhost' and cpu == 1:
             attrs['use_controller_vm'] = 'true'
         ElementTree.SubElement(
             client_element,
