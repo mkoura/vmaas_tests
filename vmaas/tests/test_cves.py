@@ -76,6 +76,14 @@ CVES = [
     ('CVE-2018-1000156', 'CVE-2018-1000156', EXP_2018_1000156)
 ]
 
+# cve, number of responses, not grep
+CVES_REGEX = [
+    ('CVE-2018-1000', 1, 'CVE-2018-10000'),
+    ('CVE-2018-[1000-2000]', 100, 'CVE-2018-1000001'),
+    ('CVE-2017', 5000, None),
+    ('CVE.*', 5000, None)
+]
+
 
 @pytest.mark.smoke
 class TestCVEsQuery(object):
@@ -170,3 +178,42 @@ class TestCVEsCorrect(object):
         assert len(cves) == 1
         cve, = cves
         tools.validate_cves(cve, expected)
+
+
+@pytest.mark.skipif(GH(311).blocks, reason='Blocked by GH 311')
+class TestCVEsRegex(object):
+    def test_post_multi(self, rest_api):
+        """Tests multiple cve regexes using POST."""
+        request_body = tools.gen_cves_body([e[0] for e in CVES_REGEX])
+        response = rest_api.get_cves(body=request_body).response_check()
+        schemas.cves_schema.validate(response.raw.body)
+        assert len(response) == 5000  # default max responses per page
+
+    @pytest.mark.parametrize(
+        'cve', CVES_REGEX, ids=[e[0] for e in CVES_REGEX])
+    def test_post_single(self, rest_api, cve):
+        """Tests single cve regex using POST."""
+        cve_name, cve_num, not_grep = cve
+        request_body = tools.gen_cves_body([cve_name])
+        cve = rest_api.get_cves(body=request_body).response_check()
+        schemas.cves_schema.validate(cve.raw.body)
+        if cve_num == 1:
+            assert len(cve) == 1
+        else:
+            assert len(cve) >= cve_num
+        if not_grep:
+            assert not cve[not_grep]
+
+    @pytest.mark.parametrize(
+        'cve', CVES_REGEX, ids=[e[0] for e in CVES_REGEX])
+    def test_get(self, rest_api, cve):
+        """Tests single cve regex using GET."""
+        cve_name, cve_num, not_grep = cve
+        cve = rest_api.get_cve(cve_name).response_check()
+        schemas.cves_schema.validate(cve.raw.body)
+        if cve_num == 1:
+            assert len(cve) == 1
+        else:
+            assert len(cve) >= cve_num
+        if not_grep:
+            assert not cve[not_grep]
