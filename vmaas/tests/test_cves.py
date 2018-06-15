@@ -79,7 +79,7 @@ CVES = [
 # cve, number of responses, not grep
 CVES_REGEX = [
     ('CVE-2018-1000', 1, 'CVE-2018-10000'),
-    ('CVE-2018-[1000-2000]', 100, 'CVE-2018-1000001'),
+    ('CVE-2018-1[0-9]{3}', 100, 'CVE-2018-1000001'),
     ('CVE-2017', 5000, None),
     ('CVE.*', 5000, None)
 ]
