@@ -80,7 +80,7 @@ CVES = [
 CVES_REGEX = [
     ('CVE-2018-1000', 1, 'CVE-2018-10000'),
     ('CVE-2018-1[0-9]{3}', 100, 'CVE-2018-1000001'),
-    ('CVE-2017', 5000, None),
+    ('CVE-2017.*', 5000, None),
     ('CVE.*', 5000, None)
 ]
 
@@ -182,13 +182,6 @@ class TestCVEsCorrect(object):
 
 @pytest.mark.skipif(GH(311).blocks, reason='Blocked by GH 311')
 class TestCVEsRegex(object):
-    def test_post_multi(self, rest_api):
-        """Tests multiple cve regexes using POST."""
-        request_body = tools.gen_cves_body([e[0] for e in CVES_REGEX])
-        response = rest_api.get_cves(body=request_body).response_check()
-        schemas.cves_schema.validate(response.raw.body)
-        assert len(response) == 5000  # default max responses per page
-
     @pytest.mark.parametrize(
         'cve', CVES_REGEX, ids=[e[0] for e in CVES_REGEX])
     def test_post_single(self, rest_api, cve):
@@ -202,7 +195,7 @@ class TestCVEsRegex(object):
         else:
             assert len(cve) >= cve_num
         if not_grep:
-            assert not cve[not_grep]
+            assert not not_grep in cve.raw
 
     @pytest.mark.parametrize(
         'cve', CVES_REGEX, ids=[e[0] for e in CVES_REGEX])
@@ -216,4 +209,4 @@ class TestCVEsRegex(object):
         else:
             assert len(cve) >= cve_num
         if not_grep:
-            assert not cve[not_grep]
+            assert not not_grep in cve.raw
