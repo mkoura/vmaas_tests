@@ -81,8 +81,8 @@ class TestUpdatesInRepos(object):
         name = packages.PACKAGES_W_REPOS[0][0]
         request_body = tools.gen_updates_body(
             [name], repositories=['nonexistent-1'])
-        updates = rest_api.get_updates(body=request_body).response_check()
-        assert not updates
+        updates, = rest_api.get_updates(body=request_body).response_check()
+        assert not updates.available_updates
 
 
 @pytest.mark.skipif(GH(301).blocks, reason='Blocked by GH 301')
