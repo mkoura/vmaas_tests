@@ -199,7 +199,7 @@ class Resource(object):
         return self
 
     def _set_key(self, key, value):
-        if value and value != 'None' and key in self.TIME_FIELDS:
+        if value and key in self.TIME_FIELDS:
             value = iso8601.parse_date(value)
             self._body[key] = value
         setattr(self, key, value)
