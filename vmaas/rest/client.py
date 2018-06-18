@@ -7,9 +7,14 @@ VMaaS REST API client for tests development.
 import logging
 
 from simple_rest_client.api import API as SimpleAPI
+from simple_rest_client.exceptions import ServerError
 from simple_rest_client.resource import Resource as SimpleResource
 
 import iso8601
+
+
+class APIException(ServerError):
+    pass
 
 
 class QueryApiActions(SimpleResource):
@@ -105,6 +110,9 @@ class ResponseContainer(object):
         if not body:
             return self
 
+        if not isinstance(self.raw.body, dict):
+            raise APIException('Response is not JSON', self.raw)
+
         self._resources_dict = {}
         self._resources_list = []
 
@@ -133,15 +141,16 @@ class ResponseContainer(object):
     def response_check(self, status_code=None):
         """Asserts that the response HTTP status code and content is as expected."""
         if status_code:
-            assert self.raw.status_code == status_code
-        else:
-            assert self.raw.client_response
+            if self.raw.status_code != status_code:
+                raise AssertionError(
+                    'Expected status code {}, got {}'.format(self.raw.status_code, status_code))
+        elif not self.raw.client_response:
+            raise AssertionError(
+                'Expected successful response, got {!r}'.format(self.raw.client_response))
 
-        assert isinstance(
-            self.raw.body, dict), 'Response is not JSON:\n'r'{}'.format(self.raw.body)
-
-        if 'success' in self.raw.body:
-            assert self.raw.body['success']
+        if 'success' in self.raw.body and not self.raw.body['success']:
+            raise AssertionError(
+                'Expected success, got "success: {}"'.format(self.raw.body['success']))
 
         return self
 
@@ -200,7 +209,10 @@ class Resource(object):
 
     def _set_key(self, key, value):
         if value and key in self.TIME_FIELDS:
-            value = iso8601.parse_date(value)
+            try:
+                value = iso8601.parse_date(value)
+            except iso8601.ParseError as err:
+                raise APIException('Attribute "{}": {}'.format(key, err), self.raw)
             self._body[key] = value
         setattr(self, key, value)
 
