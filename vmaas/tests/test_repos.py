@@ -85,6 +85,7 @@ class TestReposQuery(object):
 @pytest.mark.smoke
 class TestReposNonexistent(object):
     @pytest.mark.skipif(GH(299).blocks, reason='Blocked by GH 299')
+    @pytest.mark.skipif(GH(316).blocks, reason='Blocked by GH 316')
     def test_post_multi(self, rest_api):
         """Tests multiple non-existent repos using POST."""
         request_body = tools.gen_repos_body(REPOS_NONEXISTENT)
