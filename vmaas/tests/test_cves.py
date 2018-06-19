@@ -150,6 +150,7 @@ class TestCVEsModifiedSince(object):
 
 
 @pytest.mark.smoke
+@pytest.mark.skipif(GH(312).blocks, reason='Blocked by GH 312')
 class TestCVEsCorrect(object):
     def test_post_multi(self, rest_api):
         """Tests multiple CVEs using POST."""

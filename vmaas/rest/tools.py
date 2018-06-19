@@ -156,15 +156,20 @@ def validate_package_updates(package, expected_updates, exact_match=False):
 
 def cve_match(expected, cve):
     """Checks if expected cve record matches cve record."""
+    not_match = {}
     for key, value in expected.items():
         # exact match for all the values
-        if value == cve[key]:
+        if key == 'cvss3_score' and value:
+            if float(value) == float(cve[key]):
+                continue
+            else:
+                not_match.update({key: cve[key]})
+        elif value == cve[key]:
             continue
-        # if we are here, values don't match
-        return False
+        else:
+            not_match.update({key: cve[key]})
 
-    return True
-
+    assert not not_match, 'Expected CVE details does not match:\nExpected: {!r}\nActual: {!r}'.format(expected, not_match)
 
 def validate_cves(cve, expected):
     """Runs checks on response body of 'cves' query."""
