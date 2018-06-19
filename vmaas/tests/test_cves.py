@@ -187,6 +187,8 @@ class TestCVEsRegex(object):
     def test_post_single(self, rest_api, cve):
         """Tests single cve regex using POST."""
         cve_name, cve_num, not_grep = cve
+        if cve_name in ['CVE-2017.*', 'CVE-2018-1[0-9]{3}', 'CVE.*'] and GH(320).blocks:
+            pytest.skip("Blocked by GH#320")
         request_body = tools.gen_cves_body([cve_name])
         cve = rest_api.get_cves(body=request_body).response_check()
         schemas.cves_schema.validate(cve.raw.body)
@@ -202,6 +204,8 @@ class TestCVEsRegex(object):
     def test_get(self, rest_api, cve):
         """Tests single cve regex using GET."""
         cve_name, cve_num, not_grep = cve
+        if cve_name in ['CVE-2017.*', 'CVE-2018-1[0-9]{3}', 'CVE.*'] and GH(320).blocks:
+            pytest.skip("Blocked by GH#320")
         cve = rest_api.get_cve(cve_name).response_check()
         schemas.cves_schema.validate(cve.raw.body)
         if cve_num == 1:
