@@ -121,6 +121,8 @@ class TestErrataModifiedSince(object):
     def post_single(self, rest_api, erratum):
         """Tests single erratum using POST."""
         name, expected_name = erratum
+        if not name and GH(326).blocks:
+            pytest.skip('Blocked by GH#326')
         request_body = tools.gen_errata_body(
             [name], modified_since='2018-04-06T00:00:00+01:00')
         errata = rest_api.get_errata(body=request_body).response_check()
