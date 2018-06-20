@@ -153,6 +153,14 @@ class TestErrataModifiedSince(object):
         """Tests single real erratum using POST."""
         self.post_single(rest_api, erratum)
 
+    @pytest.mark.parametrize('erratum', ['RHBA-2016:2858'])
+    def test_modified_no_tz(self, rest_api, erratum):
+        """Tests modified since without timezone using POST."""
+        request_body = tools.gen_errata_body(
+            [erratum], modified_since='2018-04-06T00:00:00')
+        errata = rest_api.get_errata(body=request_body).response_check(400)
+        assert 'Wrong date format' in errata.raw.body
+
 
 class TestErrataRegex(object):
     @pytest.mark.skipif(GH(310).blocks, reason='Blocked by GH 310')

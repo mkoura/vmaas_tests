@@ -170,6 +170,14 @@ class TestCVEsModifiedSince(object):
         else:
             assert not cves
 
+    @pytest.mark.parametrize('cve', ['CVE-2016-7076'])
+    def test_modified_no_tz(self, rest_api, cve):
+        """Tests modified since without timezone using POST."""
+        request_body = tools.gen_cves_body(
+            [cve], modified_since='2018-01-01T00:00:00')
+        cves = rest_api.get_cves(body=request_body).response_check(400)
+        assert 'Wrong date format' in cves.raw.body
+
 
 @pytest.mark.smoke
 @pytest.mark.skipif(GH(312).blocks, reason='Blocked by GH 312')
