@@ -66,14 +66,23 @@ EXP_2018_1000156 = [
     }
 ]
 
+# CVEs for negative testing
+CVES_NEG = [
+    ('CVE-9999-9999', None, None),
+    ('', None, None)
+]
 # NOTE: all modified_dates for CVEs from RH source are modified date of latest CVE
+# if you add negative test for CVE which doesn't exist in DB,
+# please add same line to CVES_NEG list
 CVES = [
     ('CVE-2016-0634', 'CVE-2016-0634', EXP_2016_0634),
     ('CVE-2014-7970', 'CVE-2014-7970', EXP_2014_7970),  # GH#211
     ('CVE-2016-7970', None, EXP_2016_7970),  # from NIST, not in RH
     ('CVE-2016-7543', 'CVE-2016-7543', EXP_2016_7543),
     ('CVE-2016-7076', 'CVE-2016-7076', EXP_2016_7076),  # GH#211, not in NIST, only in RH
-    ('CVE-2018-1000156', 'CVE-2018-1000156', EXP_2018_1000156)
+    ('CVE-2018-1000156', 'CVE-2018-1000156', EXP_2018_1000156),
+    ('CVE-9999-9999', None, None),
+    ('', None, None)
 ]
 
 # cve, number of responses, not grep
@@ -92,30 +101,43 @@ class TestCVEsQuery(object):
         request_body = tools.gen_cves_body([c[0] for c in CVES])
         cves = rest_api.get_cves(body=request_body).response_check()
         schemas.cves_schema.validate(cves.raw.body)
-        assert len(cves) == len(CVES)
-        for cve_name, _, _ in CVES:
+        expected_cves = [x for x in CVES if x not in CVES_NEG]
+        assert len(cves) == len(expected_cves)
+        for cve_name, _, _ in expected_cves:
             assert cve_name in cves
 
     @pytest.mark.parametrize('cve_in', CVES, ids=[c[0] for c in CVES])
     def test_post_single(self, rest_api, cve_in):
         """Tests single CVE using POST."""
         cve_name, _, _ = cve_in
-        request_body = tools.gen_cves_body([cve_name])
+        if not cve_name:
+            request_body = tools.gen_cves_body([])
+        else:
+            request_body = tools.gen_cves_body([cve_name])
         cves = rest_api.get_cves(body=request_body).response_check()
-        schemas.cves_schema.validate(cves.raw.body)
-        assert len(cves) == 1
-        cve, = cves
-        assert cve.name == cve_name
+        if cve_name in [c[0] for c in CVES_NEG]:
+            assert not cves
+        else:
+            schemas.cves_schema.validate(cves.raw.body)
+            assert len(cves) == 1
+            cve, = cves
+            assert cve.name == cve_name
 
     @pytest.mark.parametrize('cve_in', CVES, ids=[c[0] for c in CVES])
     def test_get(self, rest_api, cve_in):
         """Tests single CVE using GET."""
         cve_name, _, _ = cve_in
-        cves = rest_api.get_cve(cve_name).response_check()
-        schemas.cves_schema.validate(cves.raw.body)
-        assert len(cves) == 1
-        cve, = cves
-        assert cve.name == cve_name
+        if not cve_name:
+            rest_api.get_cve(cve_name).response_check(405)
+        else:
+            cves = rest_api.get_cve(cve_name).response_check()
+            if cve_name in [c[0] for c in CVES_NEG]:
+                assert not cves
+            else:
+                schemas.cves_schema.validate(cves.raw.body)
+                assert len(cves) == 1
+                cve, = cves
+                assert cve.name == cve_name
 
 
 @pytest.mark.smoke
@@ -156,8 +178,9 @@ class TestCVEsCorrect(object):
         """Tests multiple CVEs using POST."""
         request_body = tools.gen_cves_body([c[0] for c in CVES])
         cves = rest_api.get_cves(body=request_body).response_check()
-        assert len(cves) == len(CVES)
-        for cve_name, _, expected in CVES:
+        expected_cves = [x for x in CVES if x not in CVES_NEG]
+        assert len(cves) == len(expected_cves)
+        for cve_name, _, expected in expected_cves:
             cve = cves[cve_name]
             tools.validate_cves(cve, expected)
 
@@ -165,23 +188,36 @@ class TestCVEsCorrect(object):
     def test_post_single(self, rest_api, cve_in):
         """Tests single CVE using POST."""
         cve_name, _, expected = cve_in
-        request_body = tools.gen_cves_body([cve_name])
+        if not cve_name:
+            request_body = tools.gen_cves_body([])
+        else:
+            request_body = tools.gen_cves_body([cve_name])
         cves = rest_api.get_cves(body=request_body).response_check()
-        assert len(cves) == 1
-        cve, = cves
-        tools.validate_cves(cve, expected)
+        if cve_name in [c[0] for c in CVES_NEG]:
+            assert not cves
+        else:
+            assert len(cves) == 1
+            cve, = cves
+            tools.validate_cves(cve, expected)
 
     @pytest.mark.parametrize('cve_in', CVES, ids=[c[0] for c in CVES])
     def test_get(self, rest_api, cve_in):
         """Tests single CVE using GET."""
         cve_name, _, expected = cve_in
-        cves = rest_api.get_cve(cve_name).response_check()
-        assert len(cves) == 1
-        cve, = cves
-        tools.validate_cves(cve, expected)
+        if not cve_name:
+            rest_api.get_cve(cve_name).response_check(405)
+        else:
+            cves = rest_api.get_cve(cve_name).response_check()
+            if cve_name in [c[0] for c in CVES_NEG]:
+                assert not cves
+            else:
+                assert len(cves) == 1
+                cve, = cves
+                tools.validate_cves(cve, expected)
 
 
 @pytest.mark.skipif(GH(311).blocks, reason='Blocked by GH 311')
+@pytest.mark.smoke
 class TestCVEsRegex(object):
     @pytest.mark.parametrize(
         'cve', CVES_REGEX, ids=[e[0] for e in CVES_REGEX])
