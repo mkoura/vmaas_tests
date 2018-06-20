@@ -90,9 +90,7 @@ class TestReposNonexistent(object):
         """Tests multiple non-existent repos using POST."""
         request_body = tools.gen_repos_body(REPOS_NONEXISTENT)
         repos = rest_api.get_repos(body=request_body).response_check()
-        assert len(repos) == len(REPOS_NONEXISTENT)
-        for repo_name in REPOS_NONEXISTENT:
-            assert not repos[repo_name]
+        assert not repos
 
     @pytest.mark.parametrize('repo_name', REPOS_NONEXISTENT)
     def test_post_single(self, rest_api, repo_name):
