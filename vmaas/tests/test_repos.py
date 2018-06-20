@@ -18,6 +18,7 @@ REPOS_SMOKE = [
 REPOS_NONEXISTENT = [
     'nonexistent-1',
     'nonexistent-2',
+    ''
 ]
 
 
@@ -90,19 +91,23 @@ class TestReposNonexistent(object):
         """Tests multiple non-existent repos using POST."""
         request_body = tools.gen_repos_body(REPOS_NONEXISTENT)
         repos = rest_api.get_repos(body=request_body).response_check()
-        assert len(repos) == len(REPOS_NONEXISTENT)
-        for repo_name in REPOS_NONEXISTENT:
-            assert not repos[repo_name]
+        assert not repos
 
     @pytest.mark.parametrize('repo_name', REPOS_NONEXISTENT)
     def test_post_single(self, rest_api, repo_name):
         """Tests single non-existent repo using POST."""
-        request_body = tools.gen_repos_body([repo_name])
+        if not repo_name:
+            request_body = tools.gen_repos_body([])
+        else:
+            request_body = tools.gen_repos_body([repo_name])
         repos = rest_api.get_repos(body=request_body).response_check()
         assert not repos
 
     @pytest.mark.parametrize('repo_name', REPOS_NONEXISTENT)
     def test_get(self, rest_api, repo_name):
         """Tests single non-existent repo using GET."""
-        repos = rest_api.get_repo(repo_name).response_check()
-        assert not repos
+        if not repo_name:
+            rest_api.get_repo(repo_name).response_check(405)
+        else:
+            repos = rest_api.get_repo(repo_name).response_check()
+            assert not repos
