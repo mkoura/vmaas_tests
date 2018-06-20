@@ -86,7 +86,11 @@ class VMaaSClient(object):
         action = getattr(api_obj, action_name)
 
         def wrapper(*args, **kwargs):
-            response = action(*args, **kwargs)
+            try:
+                response = action(*args, **kwargs)
+            except Exception as e:
+                response = e.response
+
             return ResponseContainer(response)
 
         return wrapper
@@ -110,7 +114,7 @@ class ResponseContainer(object):
         if not body:
             return self
 
-        if not isinstance(self.raw.body, dict):
+        if self.raw.client_response and not isinstance(self.raw.body, dict):
             raise APIException('Response is not JSON', self.raw)
 
         self._resources_dict = {}
@@ -143,7 +147,7 @@ class ResponseContainer(object):
         if status_code:
             if self.raw.status_code != status_code:
                 raise AssertionError(
-                    'Expected status code {}, got {}'.format(self.raw.status_code, status_code))
+                    'Expected status code {}, got {}'.format(status_code, self.raw.status_code))
         elif not self.raw.client_response:
             raise AssertionError(
                 'Expected successful response, got {!r}'.format(self.raw.client_response))
