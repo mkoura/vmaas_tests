@@ -11,6 +11,9 @@ ERRATA = [
 ]
 
 ERRATA_NEG = [
+    ('RHBA-2016:2858', None),
+    ('RHEA-2010:0932', None),   # GH#310
+    ('RHBA-2016:1031', None),   # GH#310
     ('RHSA-9999-9999', None),
     ('', None)
 ]
@@ -20,7 +23,7 @@ ERRATA_SMOKE = [
     ('RHSA-2017:1931', None),
     ('RHSA-2018:1099', 'RHSA-2018:1099'),
     ('RHEA-2010:0932', None),   # GH#310
-    ('RHBA-2016:1031', None),    # GH#310
+    ('RHBA-2016:1031', None),   # GH#310
     ('RHSA-9999-9999', None),
     ('', None)
 ]
@@ -30,7 +33,7 @@ ERRATA_REGEX = [
     ('vmaas*', 9),
     ('RHSA-2018:\\d+', 44),
     ('RHSA-2018:015[1-5]', 1),
-    ('RH.*', 5000)      # GH#310
+    ('RH.*', 573)      # GH#310
 ]
 
 
@@ -43,7 +46,7 @@ class TestErrataQuery(object):
         schemas.errata_schema.validate(errata_response.raw.body)
         exp_errata = [x for x in errata if x not in ERRATA_NEG]
         assert len(errata_response) == len(exp_errata)
-        for erratum_name, __ in errata:
+        for erratum_name, __ in exp_errata:
             assert erratum_name in errata_response
 
     def post_single(self, rest_api, erratum):
@@ -165,15 +168,6 @@ class TestErrataModifiedSince(object):
 
 
 class TestErrataRegex(object):
-    @pytest.mark.skipif(GH(310).blocks, reason='Blocked by GH 310')
-    def test_post_multi(self, rest_api):
-        """Tests multiple errata using POST."""
-        request_body = tools.gen_errata_body([e[0] for e in ERRATA_REGEX])
-        errata_response = rest_api.get_errata(
-            body=request_body).response_check()
-        schemas.errata_schema.validate(errata_response.raw.body)
-        assert len(errata_response) == 5000  # default max responses per page
-
     @pytest.mark.parametrize(
         'erratum', ERRATA_REGEX, ids=[e[0] for e in ERRATA_REGEX])
     def test_post_single(self, rest_api, erratum):
