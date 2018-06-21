@@ -377,6 +377,7 @@ PACKAGES = [
     ('telepathy-logger-0.8.0-5.el7.x86_64', None),
     ('vim-common-2:7.4.160-1.el7.x86_64.rpm', EXPECTED_VIM),
     ('bash-0:4.2.46-20.el7_2.i386', None),  # non existing A for given NEVR
+    ('bash-0:9.2.18-1.el7.x86_64', None),  # non existing EVRA for given N
     ('bash-1', None),  # non existing NEVRA, N exists, wrong EVRA
     ('non-exist-0:1.1-1.el7.x86_64', None)
 ]
