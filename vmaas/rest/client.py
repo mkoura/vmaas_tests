@@ -28,6 +28,7 @@ class QueryApiActions(SimpleResource):
         'get_repos': {'method': 'POST', 'url': 'repos'},
         'get_update': {'method': 'GET', 'url': 'updates/{}'},
         'get_updates': {'method': 'POST', 'url': 'updates'},
+        'get_dbchange': {'method': 'GET', 'url': 'dbchange'},
     }
 
 
@@ -37,6 +38,7 @@ class SyncApiActions(SimpleResource):
         'cvescan': {'method': 'GET', 'url': 'sync/cve'},
         'reposcan': {'method': 'POST', 'url': 'sync/repo'},
         'reporefresh': {'method': 'GET', 'url': 'sync/repo'},
+        'sync_all': {'method': 'GET', 'url': 'sync'},
     }
 
 

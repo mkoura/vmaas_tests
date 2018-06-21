@@ -5,9 +5,11 @@ REST API helper functions
 
 import datetime
 
+from vmaas.rest import exceptions
 from vmaas.rest import schemas
 from vmaas.rest.client import VMaaSClient
 from vmaas.utils.conf import conf
+from wait_for import wait_for
 
 
 def gen_cves_body(cves, modified_since=None):
@@ -199,3 +201,20 @@ def rest_api():
     except ValueError:
         port = 8080 if hostname in ('localhost', '127.0.0.1') else 80
     return VMaaSClient(hostname, port=port)
+
+
+def sync_all():
+    api = rest_api()
+    def _refresh():
+        try:
+            response = api.sync_all()
+        except exceptions.ClientError as err:
+            if 'Another sync task already in progress' in err.response.body['msg']:
+                return False
+            raise
+        return response
+
+    response, __ = wait_for(_refresh, num_sec=10)
+    response.response_check()
+    response, = response
+    assert 'Repo + CVEmap + CVE sync task started' in response.msg
