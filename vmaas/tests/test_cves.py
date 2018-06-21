@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 
+# TODO: - pagination
+#       e.g. I expect 100 CVEs are returned, set page_size=40,
+#       first page contains 40 CVEs, 2nd page - 40 CVEs, 3rd page - 20 CVEs
+#       same test needed for test_errata
+
 import pytest
 
 from vmaas.rest import schemas, tools

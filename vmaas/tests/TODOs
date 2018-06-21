@@ -1,0 +1,28 @@
+## TODOs
+- CVEs pagination:
+    - e.g. I expect 100 CVEs are returned, set page_size=40, first page contains 40 CVEs, 2nd page - 40 CVEs, 3rd page - 20 CVEs
+- Errata pagination:
+    - same as for CVEs
+- Restart reposcan when application is running - webapp should reconnect
+- webapp hot_cache pruning, app has caching of responses and deletes cached responses after some level in cache (splay tree), would be nice to test it somehow
+
+## Actual code coverage:
+Name          Stmts   Miss  Cover   Missing
+-------------------------------------------
+app.py          255     67    74%   52, 59, 67, 90-92, 199, 204-212, 296-301, 306-314, 390-409, 489-494, 499-507, 825-826, 830-831, 844-848
+cache.py        135      3    98%   114-116, 161
+cve.py           38      0   100%
+dbchange.py       9      0   100%
+errata.py        42      0   100%
+gen.py            6      0   100%
+repos.py         20      0   100%
+updates.py      217     12    94%   75-76, 92-93, 161-172
+utils.py         49      2    96%   66-67
+-------------------------------------------
+TOTAL           771     84    89%
+
+### Coverage notes
+- `cache.py` - uncovered failed creation of shelve
+- `utils.py` - pagination - page number <= 0
+- `updates.py` - hot cache pruning, cached response
+- `app.py` - pass JSON as file, /apispec endpoint, validation errors, reposcan websocket
