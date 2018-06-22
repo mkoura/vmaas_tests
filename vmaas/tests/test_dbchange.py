@@ -29,8 +29,8 @@ class TestDBChange(object):
         exported2 = iso8601.parse_date(response.raw.body['exported'])
         repo2 = iso8601.parse_date(response.raw.body['repository_changes'])
 
-        assert cve2 > cve
-        assert last2 > last
+        assert cve2 >= cve
+        assert last2 >= last
         assert errata2 == errata    # from repolist.json, should remain same
         assert exported2 > exported
         assert repo2 == repo    # from repolist.json, should remain same
