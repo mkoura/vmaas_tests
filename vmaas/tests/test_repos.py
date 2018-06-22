@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 
+# TODO: - pagination
+#       e.g. I expect 4 repos are returned, set page_size=3,
+#       first page contains 3 repos, 2nd page - 1 repo
+#       same as for test_cves, test_errata
+
 import pytest
 
 from vmaas.rest import schemas, tools
