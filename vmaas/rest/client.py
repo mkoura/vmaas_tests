@@ -123,15 +123,18 @@ class ResponseContainer(object):
         self._resources_list = []
 
         data_dict = {}
-        if 'update_list' in body:
-            data_dict = body['update_list']
-        elif 'errata_list' in body:
-            data_dict = body['errata_list']
-        elif 'repository_list' in body:
-            data_dict = body['repository_list']
-        elif 'cve_list' in body:
-            data_dict = body['cve_list']
-        else:
+        try:
+            if 'update_list' in body:
+                data_dict = body['update_list']
+            elif 'errata_list' in body:
+                data_dict = body['errata_list']
+            elif 'repository_list' in body:
+                data_dict = body['repository_list']
+            elif 'cve_list' in body:
+                data_dict = body['cve_list']
+            else:
+                data_dict = {'Bare': body}
+        except TypeError:
             data_dict = {'Bare': body}
 
         for item in data_dict:
