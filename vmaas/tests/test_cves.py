@@ -115,11 +115,14 @@ class TestCVEsQuery(object):
     def test_post_single(self, rest_api, cve_in):
         """Tests single CVE using POST."""
         cve_name, _, _ = cve_in
-        if not cve_name:
-            request_body = tools.gen_cves_body([])
-        else:
+        if cve_name:
             request_body = tools.gen_cves_body([cve_name])
-        cves = rest_api.get_cves(body=request_body).response_check()
+            cves = rest_api.get_cves(body=request_body).response_check()
+        else:
+            request_body = tools.gen_cves_body([])
+            rest_api.get_cves(body=request_body).response_check(400)
+            return
+
         if cve_name in [c[0] for c in CVES_NEG]:
             assert not cves
         else:
@@ -132,9 +135,7 @@ class TestCVEsQuery(object):
     def test_get(self, rest_api, cve_in):
         """Tests single CVE using GET."""
         cve_name, _, _ = cve_in
-        if not cve_name:
-            rest_api.get_cve(cve_name).response_check(405)
-        else:
+        if cve_name:
             cves = rest_api.get_cve(cve_name).response_check()
             if cve_name in [c[0] for c in CVES_NEG]:
                 assert not cves
@@ -143,6 +144,8 @@ class TestCVEsQuery(object):
                 assert len(cves) == 1
                 cve, = cves
                 assert cve.name == cve_name
+        else:
+            rest_api.get_cve(cve_name).response_check(405)
 
 
 @pytest.mark.smoke
@@ -201,11 +204,14 @@ class TestCVEsCorrect(object):
     def test_post_single(self, rest_api, cve_in):
         """Tests single CVE using POST."""
         cve_name, _, expected = cve_in
-        if not cve_name:
-            request_body = tools.gen_cves_body([])
-        else:
+        if cve_name:
             request_body = tools.gen_cves_body([cve_name])
-        cves = rest_api.get_cves(body=request_body).response_check()
+            cves = rest_api.get_cves(body=request_body).response_check()
+        else:
+            request_body = tools.gen_cves_body([])
+            rest_api.get_cves(body=request_body).response_check(400)
+            return
+
         if cve_name in [c[0] for c in CVES_NEG]:
             assert not cves
         else:

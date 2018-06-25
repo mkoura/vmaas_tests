@@ -101,18 +101,19 @@ class TestReposNonexistent(object):
     @pytest.mark.parametrize('repo_name', REPOS_NONEXISTENT)
     def test_post_single(self, rest_api, repo_name):
         """Tests single non-existent repo using POST."""
-        if not repo_name:
-            request_body = tools.gen_repos_body([])
-        else:
+        if repo_name:
             request_body = tools.gen_repos_body([repo_name])
-        repos = rest_api.get_repos(body=request_body).response_check()
-        assert not repos
+            repos = rest_api.get_repos(body=request_body).response_check()
+            assert not repos
+        else:
+            request_body = tools.gen_repos_body([])
+            rest_api.get_repos(body=request_body).response_check(400)
 
     @pytest.mark.parametrize('repo_name', REPOS_NONEXISTENT)
     def test_get(self, rest_api, repo_name):
         """Tests single non-existent repo using GET."""
-        if not repo_name:
-            rest_api.get_repo(repo_name).response_check(405)
-        else:
+        if repo_name:
             repos = rest_api.get_repo(repo_name).response_check()
             assert not repos
+        else:
+            rest_api.get_repo(repo_name).response_check(405)

@@ -57,11 +57,14 @@ class TestErrataQuery(object):
     def post_single(self, rest_api, erratum):
         """Tests single erratum using POST."""
         erratum_name, _ = erratum
-        if not erratum_name:
-            request_body = tools.gen_errata_body([])
-        else:
+        if erratum_name:
             request_body = tools.gen_errata_body([erratum_name])
-        errata = rest_api.get_errata(body=request_body).response_check()
+            errata = rest_api.get_errata(body=request_body).response_check()
+        else:
+            request_body = tools.gen_errata_body([])
+            rest_api.get_errata(body=request_body).response_check(400)
+            return
+
         if erratum_name in [e[0] for e in ERRATA_NEG]:
             assert not errata
         else:
