@@ -28,6 +28,7 @@ class QueryApiActions(SimpleResource):
         'get_repos': {'method': 'POST', 'url': 'repos'},
         'get_update': {'method': 'GET', 'url': 'updates/{}'},
         'get_updates': {'method': 'POST', 'url': 'updates'},
+        'get_dbchange': {'method': 'GET', 'url': 'dbchange'},
     }
 
 
@@ -37,6 +38,7 @@ class SyncApiActions(SimpleResource):
         'cvescan': {'method': 'GET', 'url': 'sync/cve'},
         'reposcan': {'method': 'POST', 'url': 'sync/repo'},
         'reporefresh': {'method': 'GET', 'url': 'sync/repo'},
+        'sync_all': {'method': 'GET', 'url': 'sync'},
     }
 
 
@@ -86,7 +88,11 @@ class VMaaSClient(object):
         action = getattr(api_obj, action_name)
 
         def wrapper(*args, **kwargs):
-            response = action(*args, **kwargs)
+            try:
+                response = action(*args, **kwargs)
+            except Exception as e:
+                response = e.response
+
             return ResponseContainer(response)
 
         return wrapper
@@ -110,22 +116,25 @@ class ResponseContainer(object):
         if not body:
             return self
 
-        if not isinstance(self.raw.body, dict):
+        if self.raw.client_response and not isinstance(self.raw.body, dict):
             raise APIException('Response is not JSON', self.raw)
 
         self._resources_dict = {}
         self._resources_list = []
 
         data_dict = {}
-        if 'update_list' in body:
-            data_dict = body['update_list']
-        elif 'errata_list' in body:
-            data_dict = body['errata_list']
-        elif 'repository_list' in body:
-            data_dict = body['repository_list']
-        elif 'cve_list' in body:
-            data_dict = body['cve_list']
-        else:
+        try:
+            if 'update_list' in body:
+                data_dict = body['update_list']
+            elif 'errata_list' in body:
+                data_dict = body['errata_list']
+            elif 'repository_list' in body:
+                data_dict = body['repository_list']
+            elif 'cve_list' in body:
+                data_dict = body['cve_list']
+            else:
+                data_dict = {'Bare': body}
+        except TypeError:
             data_dict = {'Bare': body}
 
         for item in data_dict:
@@ -143,7 +152,7 @@ class ResponseContainer(object):
         if status_code:
             if self.raw.status_code != status_code:
                 raise AssertionError(
-                    'Expected status code {}, got {}'.format(self.raw.status_code, status_code))
+                    'Expected status code {}, got {}'.format(status_code, self.raw.status_code))
         elif not self.raw.client_response:
             raise AssertionError(
                 'Expected successful response, got {!r}'.format(self.raw.client_response))

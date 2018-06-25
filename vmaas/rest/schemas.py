@@ -76,7 +76,10 @@ _repos = {
                 'label': str,
             }
         ]
-    }
+    },
+    'page': int,
+    'page_size': int,
+    'pages': int
 }
 
 _updates_top = {'update_list': {str: dict}}

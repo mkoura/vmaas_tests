@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 
+# TODO: - pagination
+#       e.g. I expect 4 repos are returned, set page_size=3,
+#       first page contains 3 repos, 2nd page - 1 repo
+#       same as for test_cves, test_errata
+
 import pytest
 
 from vmaas.rest import schemas, tools
@@ -18,6 +23,7 @@ REPOS_SMOKE = [
 REPOS_NONEXISTENT = [
     'nonexistent-1',
     'nonexistent-2',
+    ''
 ]
 
 
@@ -95,12 +101,19 @@ class TestReposNonexistent(object):
     @pytest.mark.parametrize('repo_name', REPOS_NONEXISTENT)
     def test_post_single(self, rest_api, repo_name):
         """Tests single non-existent repo using POST."""
-        request_body = tools.gen_repos_body([repo_name])
-        repos = rest_api.get_repos(body=request_body).response_check()
-        assert not repos
+        if repo_name:
+            request_body = tools.gen_repos_body([repo_name])
+            repos = rest_api.get_repos(body=request_body).response_check()
+            assert not repos
+        else:
+            request_body = tools.gen_repos_body([])
+            rest_api.get_repos(body=request_body).response_check(400)
 
     @pytest.mark.parametrize('repo_name', REPOS_NONEXISTENT)
     def test_get(self, rest_api, repo_name):
         """Tests single non-existent repo using GET."""
-        repos = rest_api.get_repo(repo_name).response_check()
-        assert not repos
+        if repo_name:
+            repos = rest_api.get_repo(repo_name).response_check()
+            assert not repos
+        else:
+            rest_api.get_repo(repo_name).response_check(405)
