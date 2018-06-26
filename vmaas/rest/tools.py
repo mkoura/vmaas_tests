@@ -5,11 +5,12 @@ REST API helper functions
 
 import datetime
 
+from wait_for import wait_for
+
 from vmaas.rest import exceptions
 from vmaas.rest import schemas
 from vmaas.rest.client import VMaaSClient
 from vmaas.utils.conf import conf
-from wait_for import wait_for
 
 
 def gen_cves_body(cves, modified_since=None):
@@ -156,10 +157,12 @@ def validate_package_updates(package, expected_updates, exact_match=False):
         expected_updates, package.available_updates, exact_match)
 
 
-def cve_match(expected, cve):
+def cve_match(expected, cve, rh_data_required):
     """Checks if expected cve record matches cve record."""
     not_match = {}
     for key, value in expected.items():
+        if not rh_data_required and key in ('redhat_url', 'secondary_url'):
+            continue
         # exact match for all the values
         if key == 'cvss3_score' and value:
             if float(value) == float(cve[key]):
@@ -171,9 +174,12 @@ def cve_match(expected, cve):
         else:
             not_match.update({key: cve[key]})
 
-    assert not not_match, 'Expected CVE details does not match:\nExpected: {!r}\nActual: {!r}'.format(expected, not_match)
+    assert not not_match, (
+            'Expected CVE details does not match:\nexpected: {!r}\nnot matching: {!r}'
+            .format(expected, not_match))
 
-def validate_cves(cve, expected):
+
+def validate_cves(cve, expected, rh_data_required=True):
     """Runs checks on response body of 'cves' query."""
 
     if not cve and expected:
@@ -191,7 +197,7 @@ def validate_cves(cve, expected):
     check_updates_uniq(cve)
 
     # check that expected data are present in the response
-    cve_match(expected[0], cve)
+    cve_match(expected[0], cve, rh_data_required)
 
 
 def rest_api():
@@ -205,8 +211,10 @@ def rest_api():
 
 def sync_all():
     api = rest_api()
+
     def _refresh():
         try:
+            # pylint: disable=no-member
             response = api.sync_all()
         except exceptions.ClientError as err:
             if 'Another sync task already in progress' in err.response.body['msg']:
