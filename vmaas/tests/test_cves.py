@@ -187,10 +187,9 @@ class TestCVEsModifiedSince(object):
         assert 'Wrong date format' in cves.raw.body
 
 
-@pytest.mark.smoke
 @pytest.mark.skipif(GH(312).blocks, reason='Blocked by GH 312')
 class TestCVEsCorrect(object):
-    def test_post_multi(self, rest_api):
+    def post_multi(self, rest_api, rh_data_required=True):
         """Tests multiple CVEs using POST."""
         request_body = tools.gen_cves_body([c[0] for c in CVES])
         cves = rest_api.get_cves(body=request_body).response_check()
@@ -198,12 +197,11 @@ class TestCVEsCorrect(object):
         assert len(cves) == len(expected_cves)
         for cve_name, _, expected in expected_cves:
             cve = cves[cve_name]
-            tools.validate_cves(cve, expected)
+            tools.validate_cves(cve, expected, rh_data_required)
 
-    @pytest.mark.parametrize('cve_in', CVES, ids=[c[0] for c in CVES])
-    def test_post_single(self, rest_api, cve_in):
+    def post_single(self, rest_api, cve_in, rh_data_required=True):
         """Tests single CVE using POST."""
-        cve_name, _, expected = cve_in
+        cve_name, __, expected = cve_in
         if cve_name:
             request_body = tools.gen_cves_body([cve_name])
             cves = rest_api.get_cves(body=request_body).response_check()
@@ -217,10 +215,9 @@ class TestCVEsCorrect(object):
         else:
             assert len(cves) == 1
             cve, = cves
-            tools.validate_cves(cve, expected)
+            tools.validate_cves(cve, expected, rh_data_required)
 
-    @pytest.mark.parametrize('cve_in', CVES, ids=[c[0] for c in CVES])
-    def test_get(self, rest_api, cve_in):
+    def get(self, rest_api, cve_in, rh_data_required=True):
         """Tests single CVE using GET."""
         cve_name, _, expected = cve_in
         if not cve_name:
@@ -232,7 +229,38 @@ class TestCVEsCorrect(object):
             else:
                 assert len(cves) == 1
                 cve, = cves
-                tools.validate_cves(cve, expected)
+                tools.validate_cves(cve, expected, rh_data_required)
+
+    def test_post_multi(self, rest_api):
+        """Tests multiple CVEs using POST."""
+        self.post_multi(rest_api, rh_data_required=True)
+
+    @pytest.mark.parametrize('cve_in', CVES, ids=[c[0] for c in CVES])
+    def test_post_single(self, rest_api, cve_in):
+        """Tests single CVE using POST."""
+        self.post_single(rest_api, cve_in, rh_data_required=True)
+
+    @pytest.mark.parametrize('cve_in', CVES, ids=[c[0] for c in CVES])
+    def test_get(self, rest_api, cve_in):
+        """Tests single CVE using GET."""
+        self.get(rest_api, cve_in, rh_data_required=True)
+
+    @pytest.mark.smoke
+    def test_post_multi_smoke(self, rest_api):
+        """Tests multiple CVEs using POST."""
+        self.post_multi(rest_api, rh_data_required=False)
+
+    @pytest.mark.smoke
+    @pytest.mark.parametrize('cve_in', CVES, ids=[c[0] for c in CVES])
+    def test_post_single_smoke(self, rest_api, cve_in):
+        """Tests single CVE using POST."""
+        self.post_single(rest_api, cve_in, rh_data_required=False)
+
+    @pytest.mark.smoke
+    @pytest.mark.parametrize('cve_in', CVES, ids=[c[0] for c in CVES])
+    def test_get_smoke(self, rest_api, cve_in):
+        """Tests single CVE using GET."""
+        self.get(rest_api, cve_in, rh_data_required=False)
 
 
 @pytest.mark.skipif(GH(311).blocks, reason='Blocked by GH 311')
@@ -253,7 +281,7 @@ class TestCVEsRegex(object):
         else:
             assert len(cve) >= cve_num
         if not_grep:
-            assert not not_grep in cve.raw
+            assert not_grep not in cve.raw
 
     @pytest.mark.parametrize(
         'cve', CVES_REGEX, ids=[e[0] for e in CVES_REGEX])
@@ -269,4 +297,4 @@ class TestCVEsRegex(object):
         else:
             assert len(cve) >= cve_num
         if not_grep:
-            assert not not_grep in cve.raw
+            assert not_grep not in cve.raw
