@@ -4,6 +4,7 @@ REST API helper functions
 """
 
 import datetime
+import iso8601
 
 from wait_for import wait_for
 
@@ -169,6 +170,10 @@ def cve_match(expected, cve, rh_data_required):
                 continue
             else:
                 not_match.update({key: cve[key]})
+        elif value and key in ('public_date', 'modified_date'):
+            value = iso8601.parse_date(value)
+            if value != cve[key]:
+                not_match.update({key: cve[key]})
         elif value == cve[key]:
             continue
         else:
@@ -225,4 +230,4 @@ def sync_all():
     response, __ = wait_for(_refresh, num_sec=10)
     response.response_check()
     response, = response
-    assert 'Repo + CVEmap + CVE sync task started' in response.msg
+    assert 'sync task started' in response.msg
