@@ -13,29 +13,42 @@ from vmaas.rest.client import VMaaSClient
 from vmaas.utils.conf import conf
 
 
-def gen_cves_body(cves, modified_since=None):
+def gen_cves_body(cves, modified_since=None, page_size=None, page=None):
     """Generates request body for CVEs query out of list of CVEs."""
     body = dict(cve_list=cves)
     if modified_since:
         if isinstance(modified_since, datetime.datetime):
             modified_since = modified_since.replace(microsecond=0).isoformat()
         body['modified_since'] = modified_since
+    if page_size:
+        body['page_size'] = page_size
+    if page:
+        body['page'] = page
     return body
 
 
-def gen_errata_body(errata, modified_since=None):
+def gen_errata_body(errata, modified_since=None, page_size=None, page=None):
     """Generates request body for errata query out of list of errata."""
     body = dict(errata_list=errata)
     if modified_since:
         if isinstance(modified_since, datetime.datetime):
             modified_since = modified_since.replace(microsecond=0).isoformat()
         body['modified_since'] = modified_since
+    if page_size:
+        body['page_size'] = page_size
+    if page:
+        body['page'] = page
     return body
 
 
-def gen_repos_body(repos):
+def gen_repos_body(repos, page_size=None, page=None):
     """Generates request body for repos query out of list of repos."""
-    return dict(repository_list=repos)
+    body = dict(repository_list=repos)
+    if page_size:
+        body['page_size'] = page_size
+    if page:
+        body['page'] = page
+    return body
 
 
 def gen_updates_body(

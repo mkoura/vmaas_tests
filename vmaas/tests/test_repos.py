@@ -1,12 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# TODO: - pagination
-#       e.g. I expect 4 repos are returned, set page_size=3,
-#       first page contains 3 repos, 2nd page - 1 repo
-#       same as for test_cves, test_errata
-
 import pytest
 
+from math import ceil
 from vmaas.rest import schemas, tools
 from vmaas.utils.blockers import GH
 
@@ -24,6 +20,25 @@ REPOS_NONEXISTENT = [
     'nonexistent-1',
     'nonexistent-2',
     ''
+]
+
+REPOS_PAGE = ('vmaas.*', 5)
+
+PAGE_SIZE = 3
+DEFAULT_PAGE_SIZE = 5000
+DEFAULT_PAGE = 1
+
+PAGINATION_NEG = [
+    ('page: 0', 0, DEFAULT_PAGE_SIZE),
+    ('page: -2', -2, DEFAULT_PAGE_SIZE),
+    ('page: 20', 20, DEFAULT_PAGE_SIZE),    # non existent page
+    ('page: "string"', 'string', DEFAULT_PAGE_SIZE),
+    ('page: nan', float('nan'), DEFAULT_PAGE_SIZE),
+    ('page_size: 0', DEFAULT_PAGE, 0),
+    ('page_size: -2', DEFAULT_PAGE, -2),
+    ('page_size: "string"', DEFAULT_PAGE, 'string'),
+    ('page_size: nan', DEFAULT_PAGE, float('nan')),
+    ('page: 0, page_size: -2', DEFAULT_PAGE, DEFAULT_PAGE_SIZE),
 ]
 
 
@@ -117,3 +132,50 @@ class TestReposNonexistent(object):
             assert not repos
         else:
             rest_api.get_repo(repo_name).response_check(405)
+
+
+class TestReposPagination(object):
+    def test_pagination(self, rest_api):
+        """Tests repos pagination using POST."""
+        old_repos = []
+        name, num = REPOS_PAGE
+        pages = ceil(num / PAGE_SIZE)
+        for i in range(1, pages + 1):
+            request_body = tools.gen_repos_body(
+                repos=[name], page=i, page_size=PAGE_SIZE)
+            repos = rest_api.get_repos(body=request_body).response_check()
+            if i < pages:
+                assert len(repos) == PAGE_SIZE
+            else:
+                # last page
+                assert len(repos) == num % PAGE_SIZE
+
+            schemas.repos_schema.validate(repos.raw.body)
+            # Check if page/page_size/pages values are correct
+            assert i == repos.raw.body['page']
+            assert PAGE_SIZE == repos.raw.body['page_size']
+            assert pages == repos.raw.body['pages']
+            # erratum from old pages are not present on actual page
+            for erratum in old_repos:
+                assert erratum not in repos
+            old_repos += repos
+
+    @pytest.mark.parametrize('page_info', PAGINATION_NEG, ids=[i[0] for i in PAGINATION_NEG])
+    def test_pagination_neg(self, rest_api, page_info):
+        """Negative testing of repos pagination with page/page_size <= 0"""
+        name, _ = REPOS_PAGE
+        _, page, page_size = page_info
+        request_body = tools.gen_repos_body(repos=[name], page=page, page_size=page_size)
+        if isinstance(page, str) or isinstance(page_size, str):
+            rest_api.get_repos(body=request_body).response_check(400)
+            return
+        else:
+            repos = rest_api.get_repos(body=request_body).response_check()
+
+        assert DEFAULT_PAGE_SIZE == repos.raw.body['page_size']
+        if page > DEFAULT_PAGE:
+            assert page == repos.raw.body['page']
+            assert not repos.raw.body['repository_list']
+        else:
+            assert DEFAULT_PAGE == repos.raw.body['page']
+            assert repos
