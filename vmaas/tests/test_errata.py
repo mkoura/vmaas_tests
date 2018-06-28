@@ -34,7 +34,8 @@ ERRATA_REGEX = [
     ('vmaas.*', 9),
     ('RHSA-2018:\\d+', 44),
     ('RHSA-2018:015[1-5]', 1),
-    ('RH.*', 573)      # GH#310
+    ('RH.*', 573),      # GH#310
+    ('*', 0)
 ]
 
 ERRATA_PAGE = ('RHSA-2017.*', 141)
@@ -199,10 +200,13 @@ class TestErrataRegex(object):
         if erratum_name in ['RH.*'] and GH(310).blocks:
             pytest.skip("Blocked by GH#310")
         request_body = tools.gen_errata_body([erratum_name])
-        errata = rest_api.get_errata(body=request_body).response_check()
-        assert len(errata) == errata_num
-        if errata_num > 0:
-            schemas.errata_schema.validate(errata.raw.body)
+        if erratum_name == '*':
+            errata = rest_api.get_errata(body=request_body).response_check(400)
+        else:
+            errata = rest_api.get_errata(body=request_body).response_check()
+            assert len(errata) == errata_num
+            if errata_num > 0:
+                schemas.errata_schema.validate(errata.raw.body)
 
     @pytest.mark.parametrize(
         'erratum', ERRATA_REGEX, ids=[e[0] for e in ERRATA_REGEX])
@@ -211,10 +215,13 @@ class TestErrataRegex(object):
         erratum_name, errata_num = erratum
         if erratum_name in ['RH.*'] and GH(310).blocks:
             pytest.skip("Blocked by GH#310")
-        errata = rest_api.get_erratum(erratum_name).response_check()
-        assert len(errata) == errata_num
-        if errata_num > 0:
-            schemas.errata_schema.validate(errata.raw.body)
+        if erratum_name == '*':
+            errata = rest_api.get_erratum(erratum_name).response_check(400)
+        else:
+            errata = rest_api.get_erratum(erratum_name).response_check()
+            assert len(errata) == errata_num
+            if errata_num > 0:
+                schemas.errata_schema.validate(errata.raw.body)
 
 
 class TestErrataPagination(object):

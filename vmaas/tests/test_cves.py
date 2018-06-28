@@ -67,6 +67,46 @@ EXP_2018_1000156 = [
     }
 ]
 
+EXP_2018_1097 = [
+    {
+        "redhat_url": "https://access.redhat.com/security/cve/cve-2018-1097",
+        "secondary_url": "https://bugzilla.redhat.com/show_bug.cgi?id=1561723",
+        "synopsis": "CVE-2018-1097",
+        "impact": "Moderate",
+        "public_date": "2018-04-04T21:29:00+00:00",
+        "cwe_list": [
+            "CWE-200"
+        ],
+        "cvss3_score": "7.700"
+    }
+]
+
+EXP_2002_2438 = [
+    {
+        "redhat_url": "",
+        "secondary_url": "",
+        "synopsis": "CVE-2002-2438",
+        "impact": "NotSet",
+        "public_date": "",
+        "cwe_list": [],
+        "cvss3_score": ""
+    }
+]
+
+EXP_2017_7528 = [
+    {
+        "redhat_url": "",
+        "secondary_url": "",
+        "synopsis": "CVE-2017-7528",
+        "impact": "Moderate",
+        "public_date": "",
+        "cwe_list": [
+            "CWE-113"
+        ],
+        "cvss3_score": "5.200"
+    }
+]
+
 # CVEs for negative testing
 CVES_NEG = [
     ('CVE-9999-9999', None, None),
@@ -82,6 +122,9 @@ CVES = [
     ('CVE-2016-7543', 'CVE-2016-7543', EXP_2016_7543),
     ('CVE-2016-7076', 'CVE-2016-7076', EXP_2016_7076),  # GH#211, not in NIST, only in RH
     ('CVE-2018-1000156', 'CVE-2018-1000156', EXP_2018_1000156),
+    ('CVE-2018-1097', 'CVE-2018-1097', EXP_2018_1097),  # Moderate impact from RH, High impact from NIST
+    ('CVE-2017-7528', 'CVE-2017-7528', EXP_2017_7528),  # CVE has RESERVED status, with impact
+    ('CVE-2002-2438', 'CVE-2002-2438', EXP_2002_2438),  # CVE has RESERVED status, without impact
     ('CVE-9999-9999', None, None),
     ('', None, None)
 ]
@@ -91,7 +134,8 @@ CVES_REGEX = [
     ('CVE-2018-1000', 1, 'CVE-2018-10000'),
     ('CVE-2018-1[0-9]{3}', 100, 'CVE-2018-1000001'),
     ('CVE-2017.*', 5000, None),
-    ('CVE.*', 5000, None)
+    ('CVE.*', 5000, None),
+    ('*', 0, None)
 ]
 
 CVES_PAGE = ('CVE-2017-03.*', 99)
@@ -289,6 +333,10 @@ class TestCVEsRegex(object):
         if cve_name in ['CVE-2017.*', 'CVE-2018-1[0-9]{3}', 'CVE.*'] and GH(320).blocks:
             pytest.skip("Blocked by GH#320")
         request_body = tools.gen_cves_body([cve_name])
+        if cve_name == '*':
+            rest_api.get_cves(body=request_body).response_check(400)
+            return
+
         cve = rest_api.get_cves(body=request_body).response_check()
         schemas.cves_schema.validate(cve.raw.body)
         if cve_num == 1:
@@ -305,6 +353,10 @@ class TestCVEsRegex(object):
         cve_name, cve_num, not_grep = cve
         if cve_name in ['CVE-2017.*', 'CVE-2018-1[0-9]{3}', 'CVE.*'] and GH(320).blocks:
             pytest.skip("Blocked by GH#320")
+        if cve_name == '*':
+            rest_api.get_cve(cve_name).response_check(400)
+            return
+
         cve = rest_api.get_cve(cve_name).response_check()
         schemas.cves_schema.validate(cve.raw.body)
         if cve_num == 1:
