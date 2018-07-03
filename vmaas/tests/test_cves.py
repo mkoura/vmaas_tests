@@ -1,12 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# TODO: - pagination
-#       e.g. I expect 100 CVEs are returned, set page_size=40,
-#       first page contains 40 CVEs, 2nd page - 40 CVEs, 3rd page - 20 CVEs
-#       same test needed for test_errata
-
 import pytest
 
+from math import ceil
 from vmaas.rest import schemas, tools
 from vmaas.utils.blockers import GH
 
@@ -140,6 +136,25 @@ CVES_REGEX = [
     ('CVE-2017.*', 5000, None),
     ('CVE.*', 5000, None),
     ('*', 0, None)
+]
+
+CVES_PAGE = ('CVE-2017-03.*', 99)
+
+PAGE_SIZE = 40
+DEFAULT_PAGE_SIZE = 5000
+DEFAULT_PAGE = 1
+
+PAGINATION_NEG = [
+    ('page: 0', 0, DEFAULT_PAGE_SIZE),
+    ('page: -2', -2, DEFAULT_PAGE_SIZE),
+    ('page: 20', 20, DEFAULT_PAGE_SIZE),    # non existent page
+    ('page: "string"', 'string', DEFAULT_PAGE_SIZE),
+    ('page: nan', float('nan'), DEFAULT_PAGE_SIZE),
+    ('page_size: 0', DEFAULT_PAGE, 0),
+    ('page_size: -2', DEFAULT_PAGE, -2),
+    ('page_size: "string"', DEFAULT_PAGE, 'string'),
+    ('page_size: nan', DEFAULT_PAGE, float('nan')),
+    ('page: 0, page_size: -2', DEFAULT_PAGE, DEFAULT_PAGE_SIZE),
 ]
 
 
@@ -350,3 +365,50 @@ class TestCVEsRegex(object):
             assert len(cve) >= cve_num
         if not_grep:
             assert not_grep not in cve.raw
+
+
+class TestCVEsPagination(object):
+    def test_pagination(self, rest_api):
+        """Tests CVEs pagination using POST."""
+        old_cves = []
+        name, num = CVES_PAGE
+        pages = ceil(num / PAGE_SIZE)
+        for i in range(1, pages + 1):
+            request_body = tools.gen_cves_body(
+                cves=[name], page=i, page_size=PAGE_SIZE)
+            cves = rest_api.get_cves(body=request_body).response_check()
+            if i < pages:
+                assert len(cves) == PAGE_SIZE
+            else:
+                # last page
+                assert len(cves) == num % PAGE_SIZE
+
+            schemas.cves_schema.validate(cves.raw.body)
+            # Check if page/page_size/pages values are correct
+            assert i == cves.raw.body['page']
+            assert PAGE_SIZE == cves.raw.body['page_size']
+            assert pages == cves.raw.body['pages']
+            # erratum from old pages are not present on actual page
+            for erratum in old_cves:
+                assert erratum not in cves
+            old_cves += cves
+
+    @pytest.mark.parametrize('page_info', PAGINATION_NEG, ids=[i[0] for i in PAGINATION_NEG])
+    def test_pagination_neg(self, rest_api, page_info):
+        """Negative testing of CVEs pagination with page/page_size <= 0"""
+        name, _ = CVES_PAGE
+        _, page, page_size = page_info
+        request_body = tools.gen_cves_body(cves=[name], page=page, page_size=page_size)
+        if isinstance(page, str) or isinstance(page_size, str):
+            rest_api.get_cves(body=request_body).response_check(400)
+            return
+        else:
+            cves = rest_api.get_cves(body=request_body).response_check()
+
+        assert DEFAULT_PAGE_SIZE == cves.raw.body['page_size']
+        if page > DEFAULT_PAGE:
+            assert page == cves.raw.body['page']
+            assert not cves.raw.body['cve_list']
+        else:
+            assert DEFAULT_PAGE == cves.raw.body['page']
+            assert cves

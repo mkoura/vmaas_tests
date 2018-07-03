@@ -1,12 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# TODO: - pagination
-#       e.g. I expect 100 errata are returned, set page_size=40,
-#       first page contains 40 errata, 2nd page - 40, 3rd page - 20 errata
-#       same test needed for test_cves
-
 import pytest
 
+from math import ceil
 from vmaas.rest import schemas, tools
 from vmaas.utils.blockers import GH
 
@@ -40,6 +36,25 @@ ERRATA_REGEX = [
     ('RHSA-2018:015[1-5]', 1),
     ('RH.*', 573),      # GH#310
     ('*', 0)
+]
+
+ERRATA_PAGE = ('RHSA-2017.*', 141)
+
+PAGE_SIZE = 50
+DEFAULT_PAGE_SIZE = 5000
+DEFAULT_PAGE = 1
+
+PAGINATION_NEG = [
+    ('page: 0', 0, DEFAULT_PAGE_SIZE),
+    ('page: -2', -2, DEFAULT_PAGE_SIZE),
+    ('page: 20', 20, DEFAULT_PAGE_SIZE),    # non existent page
+    ('page: "string"', 'string', DEFAULT_PAGE_SIZE),
+    ('page: nan', float('nan'), DEFAULT_PAGE_SIZE),
+    ('page_size: 0', DEFAULT_PAGE, 0),
+    ('page_size: -2', DEFAULT_PAGE, -2),
+    ('page_size: "string"', DEFAULT_PAGE, 'string'),
+    ('page_size: nan', DEFAULT_PAGE, float('nan')),
+    ('page: 0, page_size: -2', DEFAULT_PAGE, DEFAULT_PAGE_SIZE),
 ]
 
 
@@ -207,3 +222,50 @@ class TestErrataRegex(object):
             assert len(errata) == errata_num
             if errata_num > 0:
                 schemas.errata_schema.validate(errata.raw.body)
+
+
+class TestErrataPagination(object):
+    def test_pagination(self, rest_api):
+        """Tests errata pagination using POST."""
+        old_errata = []
+        name, num = ERRATA_PAGE
+        pages = ceil(num / PAGE_SIZE)
+        for i in range(1, pages + 1):
+            request_body = tools.gen_errata_body(
+                errata=[name], page=i, page_size=PAGE_SIZE)
+            errata = rest_api.get_errata(body=request_body).response_check()
+            if i < pages:
+                assert len(errata) == PAGE_SIZE
+            else:
+                # last page
+                assert len(errata) == num % PAGE_SIZE
+
+            schemas.errata_schema.validate(errata.raw.body)
+            # Check if page/page_size/pages values are correct
+            assert i == errata.raw.body['page']
+            assert PAGE_SIZE == errata.raw.body['page_size']
+            assert pages == errata.raw.body['pages']
+            # erratum from old pages are not present on actual page
+            for erratum in old_errata:
+                assert erratum not in errata
+            old_errata += errata
+
+    @pytest.mark.parametrize('page_info', PAGINATION_NEG, ids=[i[0] for i in PAGINATION_NEG])
+    def test_pagination_neg(self, rest_api, page_info):
+        """Negative testing of errata pagination with page/page_size <= 0"""
+        name, _ = ERRATA_PAGE
+        _, page, page_size = page_info
+        request_body = tools.gen_errata_body(errata=[name], page=page, page_size=page_size)
+        if isinstance(page, str) or isinstance(page_size, str):
+            rest_api.get_errata(body=request_body).response_check(400)
+            return
+        else:
+            errata = rest_api.get_errata(body=request_body).response_check()
+
+        assert DEFAULT_PAGE_SIZE == errata.raw.body['page_size']
+        if page > DEFAULT_PAGE:
+            assert page == errata.raw.body['page']
+            assert not errata.raw.body['errata_list']
+        else:
+            assert DEFAULT_PAGE == errata.raw.body['page']
+            assert errata
